@@ -7,8 +7,8 @@ on:
     branches: [ main ]
 
 jobs:
-  build:
-
+  
+  build-windows:
     runs-on: ubuntu-latest
 
     steps:
@@ -23,3 +23,19 @@ jobs:
       with:
         name: log4j-finder.exe
         path: dist/windows
+
+  build-linux:
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v2
+
+    - name: Package Application
+      uses: JackMcKew/pyinstaller-action-linux@main
+      with:
+        path: src
+
+    - uses: actions/upload-artifact@v2
+      with:
+        name: log4j-finder
+        path: dist/linux
