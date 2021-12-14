@@ -21,7 +21,7 @@ jobs:
 
     - uses: actions/upload-artifact@v2
       with:
-        name: log4j-finder.exe
+        name: log4j-finder-windows
         path: dist/windows
 
   build-linux:
@@ -37,5 +37,5 @@ jobs:
 
     - uses: actions/upload-artifact@v2
       with:
-        name: log4j-finder
+        name: log4j-finder-linux
         path: dist/linux
