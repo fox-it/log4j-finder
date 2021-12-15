@@ -5,6 +5,7 @@ block_cipher = None
 
 
 a = Analysis(['log4j-finder.py'],
+             hiddenimports=['colorama'],
              win_no_prefer_redirects=False,
              win_private_assemblies=False,
              cipher=block_cipher,
@@ -16,7 +17,7 @@ exe = EXE(pyz,
           a.scripts,
           a.binaries,
           a.zipfiles,
-          a.datas,  
+          a.datas,
           [],
           name='log4j-finder',
           debug=False,

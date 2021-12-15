@@ -29,8 +29,15 @@ import collections
 
 from pathlib import Path
 
+# Optionally import colorama to enable colored output for Windows
+try:
+    import colorama
+    colorama.init()
+    NO_COLOR = False
+except ImportError:
+    NO_COLOR = True if sys.platform == 'win32' else False
+
 log = logging.getLogger(__name__)
-NO_COLOR = False
 
 # Java Archive Extensions
 JAR_EXTENSIONS = (".jar", ".war", ".ear")
