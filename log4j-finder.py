@@ -63,12 +63,12 @@ MD5_BAD = {
     "8b2260b1cce64144f6310876f94b1638": "log4j 2.4 - 2.5",
     "a193703904a3f18fb3c90a877eb5c8a7": "log4j 2.8.2",
     "f1d630c48928096a484e4b95ccb162a0": "log4j 2.14.0 - 2.14.1",
+    # 2.15.0 vulnerable to Denial of Service attack (source: https://cve.mitre.org/cgi-bin/cvename.cgi?name=CVE-2021-45046)
+    "5d253e53fa993e122ff012221aa49ec3": "log4j 2.15.0",
 }
 
 # Known GOOD
 MD5_GOOD = {
-    # JndiManager.class (source: https://github.com/nccgroup/Cyber-Defence/blob/master/Intelligence/CVE-2021-44228/modified-classes/md5sum.txt)
-    "5d253e53fa993e122ff012221aa49ec3": "log4j 2.15.0",
     # JndiManager.class (source: https://repo.maven.apache.org/maven2/org/apache/logging/log4j/log4j-core/2.16.0/log4j-core-2.16.0.jar)
     "ba1cf8f81e7b31c709768561ba8ab558": "log4j 2.16.0",
 }
