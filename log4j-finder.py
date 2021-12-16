@@ -221,7 +221,7 @@ def check_vulnerable(fobj, path_chain, stats, has_jndilookup=True):
 
 def main():
     parser = argparse.ArgumentParser(
-        description="Find vulnerable log4j2 on filesystem (Log4Shell CVE-2021-4428)",
+        description=f"%(prog)s v{__version__} - Find vulnerable log4j2 on filesystem (Log4Shell CVE-2021-4428, CVE-2021-45046)",
         epilog="Files are scanned recursively, both on disk and in Java Archive Files",
         formatter_class=argparse.ArgumentDefaultsHelpFormatter,
     )
@@ -243,6 +243,7 @@ def main():
         "-n", "--no-color", action="store_true", help="disable color output"
     )
     parser.add_argument("-b", "--no-banner", action="store_true", help="disable banner")
+    parser.add_argument("-V", "--version", action="version", version=f"%(prog)s {__version__}")
     args = parser.parse_args()
     logging.basicConfig(
         format="%(asctime)s %(levelname)s %(message)s",
