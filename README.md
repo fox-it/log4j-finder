@@ -83,13 +83,13 @@ We are aware that some Anti Virus vendors don't like the Windows binaries, in th
    pip install colorama
    ```
 
-3.  Download the latest version of the `log2j-finder.py` script and then run PyInstaller:
+3.  Download the latest version of the `log4j-finder.py` script and then run PyInstaller:
 
    ```bash
-   pyinstaller --onefile --hidden-import colorama log2j-finder.py
+   pyinstaller --onefile --hidden-import colorama log4j-finder.py
    ```
 
-The Windows executable is then in the `dist` directory: `dist\log2j-finder.exe`
+The Windows executable is then in the `dist` directory: `dist\log4j-finder.exe`
 
 ### Generating the Linux executable
 
