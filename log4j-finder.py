@@ -173,34 +173,49 @@ def yellow(s):
     return f"\033[33m{s}\033[0m"
 
 
+def cyan(s):
+    if NO_COLOR:
+        return s
+    return f"\033[36m{s}\033[0m"
+
+
 def bold(s):
     if NO_COLOR:
         return s
     return f"\033[1m{s}\033[0m"
 
 
-def check_vulnerable(fobj, path_chain, stats):
+def check_vulnerable(fobj, path_chain, stats, has_jndilookup=True):
     """
     Test if fobj matches any of the known bad or known good MD5 hashes.
     Also prints message if fobj is vulnerable or known good or unknown.
+
+    if `has_jndilookup` is False, it means `lookup/JndiLookup.class` was not found and could
+    indicate it was patched according to https://logging.apache.org/log4j/2.x/security.html using:
+        zip -q -d log4j-core-*.jar org/apache/logging/log4j/core/lookup/JndiLookup.class
     """
     md5sum = md5_digest(fobj)
     first_path = bold(path_chain.pop(0))
     path_chain = " -> ".join(str(p) for p in [first_path] + path_chain)
-    dt = datetime.datetime.utcnow()
+    now = datetime.datetime.utcnow()
     vulnerable = red("VULNERABLE")
+    patched = cyan("PATCHED")
     good = green("GOOD")
     unknown = yellow("UNKNOWN")
     if md5sum in MD5_BAD:
         comment = MD5_BAD[md5sum]
-        print(f"[{dt}] {vulnerable}: {path_chain} [{md5sum}: {comment}]")
-        stats["vulnerable"] += 1
+        if has_jndilookup:
+            print(f"[{now}] {vulnerable}: {path_chain} [{md5sum}: {comment}]")
+            stats["vulnerable"] += 1
+        else:
+            print(f"[{now}] {patched}: {path_chain} [{md5sum}: {comment}]")
+            stats["patched"] += 1
     elif md5sum in MD5_GOOD:
         comment = MD5_GOOD[md5sum]
-        print(f"[{dt}] {good}: {path_chain} [{md5sum}: {comment}]")
+        print(f"[{now}] {good}: {path_chain} [{md5sum}: {comment}]")
         stats["good"] += 1
     else:
-        print(f"[{dt}] {unknown}: MD5 not known for {path_chain} [{md5sum}]")
+        print(f"[{now}] {unknown}: MD5 not known for {path_chain} [{md5sum}]")
         stats["unknown"] += 1
 
 
@@ -248,6 +263,7 @@ def main():
         "files": 0,
         "directories": 0,
         "vulnerable": 0,
+        "patched": 0,
         "good": 0,
         "unknown": 0,
     }
@@ -256,13 +272,19 @@ def main():
     if not args.no_banner:
         print(FIGLET)
     for directory in args.path:
-        print(f"[{datetime.datetime.utcnow()}] Scanning: {directory}")
+        now = datetime.datetime.utcnow()
+        print(f"[{now}] Scanning: {directory}")
         for p in iter_scandir(directory, stats=stats):
             if p.name.lower() in FILENAMES:
                 stats["scanned"] += 1
                 log.info(f"Found file: {p}")
                 with p.open("rb") as fobj:
-                    check_vulnerable(fobj, [p], stats)
+                    # If we find JndiManager, we also check if JndiLookup.class exists
+                    has_lookup = True
+                    if p.name.lower().endswith("JndiManager.class".lower()):
+                        lookup_path = p.parent.parent / "lookup/JndiLookup.class"
+                        has_lookup = lookup_path.exists()
+                    check_vulnerable(fobj, [p], stats, has_lookup)
             if p.suffix.lower() in JAR_EXTENSIONS:
                 try:
                     log.info(f"Found jar file: {p}")
@@ -272,14 +294,20 @@ def main():
                     ):
                         log.info(f"Found zfile: {zinfo} ({parents}")
                         with zfile.open(zinfo.filename) as zf:
-                            check_vulnerable(zf, parents + [zpath], stats)
+                            # If we find JndiManager.class, we also check if JndiLookup.class exists
+                            has_lookup = True
+                            if zpath.name.lower().endswith("JndiManager.class".lower()):
+                                lookup_path = str(
+                                    zpath.parent.parent / "lookup/JndiLookup.class"
+                                )
+                                has_lookup = zipfile.Path(zfile, lookup_path).exists()
+                            check_vulnerable(zf, parents + [zpath], stats, has_lookup)
                 except IOError as e:
-                    log.debug(f"{p}: {e}", e)
+                    log.debug(f"{p}: {e}")
 
     elapsed_time = time.monotonic() - start_time
-    print(
-        f"[{datetime.datetime.utcnow()}] Finished scan, elapsed time: {elapsed_time:.2f} seconds"
-    )
+    now = datetime.datetime.utcnow()
+    print(f"[{now}] Finished scan, elapsed time: {elapsed_time:.2f} seconds")
 
     print("\nSummary:")
     print(f" Processed {stats['files']} files and {stats['directories']} directories")
@@ -288,6 +316,8 @@ def main():
         print("  Found {} vulnerable files".format(stats["vulnerable"]))
     if stats["good"]:
         print("  Found {} good files".format(stats["good"]))
+    if stats["patched"]:
+        print("  Found {} patched files".format(stats["patched"]))
     if stats["unknown"]:
         print("  Found {} unknown files".format(stats["unknown"]))
     print(f"\nElapsed time: {elapsed_time:.2f} seconds ")
