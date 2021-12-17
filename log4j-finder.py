@@ -150,7 +150,7 @@ def iter_jarfile(fobj, parents=None, stats=None):
                     yield (zinfo, zfile, zpath, parents)
                 elif zpath.name.lower().endswith(JAR_EXTENSIONS):
                     yield from iter_jarfile(
-                        zfile.open(zinfo.filename), parents=parents + [zpath]
+                        io.BytesIO(zfile.open(zinfo.filename).read()), parents=parents + [zpath]
                     )
     except IOError as e:
         log.debug(f"{fobj}: {e}")
