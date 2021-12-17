@@ -23,6 +23,7 @@ import zipfile
 import logging
 import argparse
 import hashlib
+import platform
 import datetime
 import functools
 import itertools
@@ -83,6 +84,8 @@ MD5_GOOD = {
     # JndiManager.class (source: https://repo.maven.apache.org/maven2/org/apache/logging/log4j/log4j-core/2.16.0/log4j-core-2.16.0.jar)
     "ba1cf8f81e7b31c709768561ba8ab558": "log4j 2.16.0",
 }
+
+HOSTNAME = platform.node()
 
 
 def md5_digest(fobj):
@@ -179,6 +182,12 @@ def cyan(s):
     return f"\033[36m{s}\033[0m"
 
 
+def magenta(s):
+    if NO_COLOR:
+        return s
+    return f"\033[35m{s}\033[0m"
+
+
 def bold(s):
     if NO_COLOR:
         return s
@@ -197,26 +206,36 @@ def check_vulnerable(fobj, path_chain, stats, has_jndilookup=True):
     md5sum = md5_digest(fobj)
     first_path = bold(path_chain.pop(0))
     path_chain = " -> ".join(str(p) for p in [first_path] + path_chain)
-    now = datetime.datetime.utcnow()
-    vulnerable = red("VULNERABLE")
-    patched = cyan("PATCHED")
-    good = green("GOOD")
-    unknown = yellow("UNKNOWN")
+    comment = collections.ChainMap(MD5_BAD, MD5_GOOD).get(md5sum, "Unknown MD5")
+    color_map = {"vulnerable": red, "good": green, "patched": cyan, "unknown": yellow}
     if md5sum in MD5_BAD:
-        comment = MD5_BAD[md5sum]
-        if has_jndilookup:
-            print(f"[{now}] {vulnerable}: {path_chain} [{md5sum}: {comment}]")
-            stats["vulnerable"] += 1
-        else:
-            print(f"[{now}] {patched}: {path_chain} [{md5sum}: {comment}]")
-            stats["patched"] += 1
+        status = "vulnerable" if has_jndilookup else "patched"
     elif md5sum in MD5_GOOD:
-        comment = MD5_GOOD[md5sum]
-        print(f"[{now}] {good}: {path_chain} [{md5sum}: {comment}]")
-        stats["good"] += 1
+        status = "good"
     else:
-        print(f"[{now}] {unknown}: MD5 not known for {path_chain} [{md5sum}]")
-        stats["unknown"] += 1
+        status = "unknown"
+    stats[status] += 1
+    color = color_map.get(status, red)
+    now = datetime.datetime.utcnow().replace(microsecond=0)
+    hostname = magenta(HOSTNAME)
+    status = bold(color(status.upper()))
+    md5sum = color(md5sum)
+    comment = bold(color(comment))
+    print(f"[{now}] {hostname} {status}: {path_chain} [{md5sum}: {comment}]")
+
+
+def print_summary(stats):
+    print("\nSummary:")
+    print(f" Processed {stats['files']} files and {stats['directories']} directories")
+    print(f" Scanned {stats['scanned']} files")
+    if stats["vulnerable"]:
+        print("  Found {} vulnerable files".format(stats["vulnerable"]))
+    if stats["good"]:
+        print("  Found {} good files".format(stats["good"]))
+    if stats["patched"]:
+        print("  Found {} patched files".format(stats["patched"]))
+    if stats["unknown"]:
+        print("  Found {} unknown files".format(stats["unknown"]))
 
 
 def main():
@@ -242,8 +261,16 @@ def main():
     parser.add_argument(
         "-n", "--no-color", action="store_true", help="disable color output"
     )
+    parser.add_argument(
+        "-q",
+        "--quiet",
+        action="store_true",
+        help="be more quiet, disables banner and summary",
+    )
     parser.add_argument("-b", "--no-banner", action="store_true", help="disable banner")
-    parser.add_argument("-V", "--version", action="version", version=f"%(prog)s {__version__}")
+    parser.add_argument(
+        "-V", "--version", action="version", version=f"%(prog)s {__version__}"
+    )
     args = parser.parse_args()
     logging.basicConfig(
         format="%(asctime)s %(levelname)s %(message)s",
@@ -259,22 +286,16 @@ def main():
         global NO_COLOR
         NO_COLOR = True
 
-    stats = {
-        "scanned": 0,
-        "files": 0,
-        "directories": 0,
-        "vulnerable": 0,
-        "patched": 0,
-        "good": 0,
-        "unknown": 0,
-    }
+    stats = collections.Counter()
     start_time = time.monotonic()
+    hostname = magenta(HOSTNAME)
 
-    if not args.no_banner:
+    if not args.no_banner and not args.quiet:
         print(FIGLET)
     for directory in args.path:
-        now = datetime.datetime.utcnow()
-        print(f"[{now}] Scanning: {directory}")
+        now = datetime.datetime.utcnow().replace(microsecond=0)
+        if not args.quiet:
+            print(f"[{now}] {hostname} Scanning: {directory}")
         for p in iter_scandir(directory, stats=stats):
             if p.name.lower() in FILENAMES:
                 stats["scanned"] += 1
@@ -306,22 +327,12 @@ def main():
                 except IOError as e:
                     log.debug(f"{p}: {e}")
 
-    elapsed_time = time.monotonic() - start_time
-    now = datetime.datetime.utcnow()
-    print(f"[{now}] Finished scan, elapsed time: {elapsed_time:.2f} seconds")
-
-    print("\nSummary:")
-    print(f" Processed {stats['files']} files and {stats['directories']} directories")
-    print(f" Scanned {stats['scanned']} files")
-    if stats["vulnerable"]:
-        print("  Found {} vulnerable files".format(stats["vulnerable"]))
-    if stats["good"]:
-        print("  Found {} good files".format(stats["good"]))
-    if stats["patched"]:
-        print("  Found {} patched files".format(stats["patched"]))
-    if stats["unknown"]:
-        print("  Found {} unknown files".format(stats["unknown"]))
-    print(f"\nElapsed time: {elapsed_time:.2f} seconds ")
+    elapsed = time.monotonic() - start_time
+    now = datetime.datetime.utcnow().replace(microsecond=0)
+    if not args.quiet:
+        print(f"[{now}] {hostname} Finished scan, elapsed time: {elapsed:.2f} seconds")
+        print_summary(stats)
+        print(f"\nElapsed time: {elapsed:.2f} seconds")
 
 
 if __name__ == "__main__":
