@@ -149,9 +149,15 @@ def iter_jarfile(fobj, parents=None, stats=None):
                 if zpath.name.lower() in FILENAMES:
                     yield (zinfo, zfile, zpath, parents)
                 elif zpath.name.lower().endswith(JAR_EXTENSIONS):
-                    yield from iter_jarfile(
-                        io.BytesIO(zfile.open(zinfo.filename).read()), parents=parents + [zpath]
-                    )
+                    zfobj = zfile.open(zinfo.filename)
+                    try:
+                        # Test if we can open the zfobj without errors, fallback to BytesIO otherwise
+                        # see https://github.com/fox-it/log4j-finder/pull/22
+                        zipfile.ZipFile(zfobj)
+                    except zipfile.BadZipFile as e:
+                        log.debug(f"Got {zinfo}: {e}, falling back to BytesIO")
+                        zfobj = io.BytesIO(zfile.open(zinfo.filename).read())
+                    yield from iter_jarfile(zfobj, parents=parents + [zpath])
     except IOError as e:
         log.debug(f"{fobj}: {e}")
     except zipfile.BadZipFile as e:
