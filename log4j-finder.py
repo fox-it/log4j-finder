@@ -15,6 +15,9 @@
 #  Or multiple directories:
 #      $ python3 log4j-finder.py /path/to/dir1 /path/to/dir2
 #
+#  Exclude files or directories:
+#      $ python3 log4j-finder.py / --exclude "/*/.dontgohere" --exclude "/home/user/*.war"
+#
 import os
 import io
 import sys
@@ -28,6 +31,7 @@ import datetime
 import functools
 import itertools
 import collections
+import fnmatch
 
 from pathlib import Path
 
@@ -97,7 +101,7 @@ def md5_digest(fobj):
     return d.hexdigest()
 
 
-def iter_scandir(path, stats=None):
+def iter_scandir(path, stats=None, exclude=None):
     """
     Yields all files matcthing JAR_EXTENSIONS or FILENAMES recursively in path
     """
@@ -107,7 +111,7 @@ def iter_scandir(path, stats=None):
             stats["files"] += 1
         yield p
     try:
-        for entry in scantree(path, stats=stats):
+        for entry in scantree(path, stats=stats, exclude=exclude):
             if entry.is_symlink():
                 continue
             elif entry.is_file():
@@ -120,15 +124,18 @@ def iter_scandir(path, stats=None):
         log.debug(e)
 
 
-def scantree(path, stats=None):
+def scantree(path, stats=None, exclude=None):
     """Recursively yield DirEntry objects for given directory."""
+    exclude = exclude or [] 
     try:
         with os.scandir(path) as it:
             for entry in it:
+                if any(fnmatch.fnmatch(entry.path, exclusion) for exclusion in exclude):
+                    continue 
                 if entry.is_dir(follow_symlinks=False):
                     if stats:
                         stats["directories"] += 1
-                    yield from scantree(entry.path, stats=stats)
+                    yield from scantree(entry.path, stats=stats, exclude=exclude)
                 else:
                     if stats:
                         stats["files"] += 1
@@ -278,6 +285,13 @@ def main():
     parser.add_argument(
         "-V", "--version", action="version", version=f"%(prog)s {__version__}"
     )
+    parser.add_argument(
+        "-e",
+        "--exclude",
+        action='append',
+        help="exclude files/directories by pattern (can be used multiple times)",
+        metavar='PATTERN'
+    )
     args = parser.parse_args()
     logging.basicConfig(
         format="%(asctime)s %(levelname)s %(message)s",
@@ -303,7 +317,7 @@ def main():
         now = datetime.datetime.utcnow().replace(microsecond=0)
         if not args.quiet:
             print(f"[{now}] {hostname} Scanning: {directory}")
-        for p in iter_scandir(directory, stats=stats):
+        for p in iter_scandir(directory, stats=stats, exclude=args.exclude):
             if p.name.lower() in FILENAMES:
                 stats["scanned"] += 1
                 log.info(f"Found file: {p}")
