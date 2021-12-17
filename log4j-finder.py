@@ -60,6 +60,7 @@ FILENAMES = [
     p.lower()
     for p in [
         "JndiManager.class",
+        "JMSAppender.class"
     ]
 ]
 
@@ -297,7 +298,7 @@ def main():
     hostname = magenta(HOSTNAME)
 
     if not args.no_banner and not args.quiet:
-        print(FIGLET)
+       print(FIGLET)
     for directory in args.path:
         now = datetime.datetime.utcnow().replace(microsecond=0)
         if not args.quiet:
@@ -325,13 +326,11 @@ def main():
                             # If we find JndiManager.class, we also check if JndiLookup.class exists
                             has_lookup = True
                             if zpath.name.lower().endswith("JndiManager.class".lower()):
-                                lookup_path = str(
-                                    zpath.parent.parent / "lookup/JndiLookup.class"
-                                )
+                                lookup_path = zpath.parent.parent / "lookup/JndiLookup.class"
                                 try:
-                                    has_lookup = zfile.open(lookup_path)
+                                    has_lookup = zfile.open(lookup_path.as_posix())
                                 except KeyError:
-                                    has_lookup = False
+                                    pass
                             check_vulnerable(zf, parents + [zpath], stats, has_lookup)
                 except IOError as e:
                     log.debug(f"{p}: {e}")
