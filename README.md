@@ -81,6 +81,9 @@ We are aware that some Anti Virus vendors don't like the Windows binaries, in th
 
 1. If you don't have Python 3.6 or higher installed, download it first from https://www.python.org/downloads/
 
+   * Choose `Python 3.8.10` if you want your binary to work on Windows 7:
+     * Download [Python 3.8.10 Windows installer (32 bit)](https://www.python.org/ftp/python/3.8.10/python-3.8.10.exe)
+     * Download [Python 3.8.10 Windows installer (64-bit)](https://www.python.org/ftp/python/3.8.10/python-3.8.10-amd64.exe)
    * Ensure that during install you choose: `Add Python 3.x to PATH`, this makes the following steps much easier.
 
 2. Open a command prompt and use `pip` to install the `pyinstaller` package:
