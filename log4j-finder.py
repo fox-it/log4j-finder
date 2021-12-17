@@ -296,8 +296,8 @@ def main():
     start_time = time.monotonic()
     hostname = magenta(HOSTNAME)
 
-    #if not args.no_banner and not args.quiet:
-    #    print(FIGLET)
+    if not args.no_banner and not args.quiet:
+        print(FIGLET)
     for directory in args.path:
         now = datetime.datetime.utcnow().replace(microsecond=0)
         if not args.quiet:
