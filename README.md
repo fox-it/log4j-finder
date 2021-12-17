@@ -148,6 +148,11 @@ Or multiple directories and or files:
 $ python3 log4j-finder.py /path/to/dir1 /path/to/dir2 /path/to/jarfile.jar
 ```
 
+Exclude files or directories:
+```bash
+$ python3 log4j-finder.py / --exclude "/*/.dontgohere" --exclude "/home/user/*.war"
+```
+
 Note that on Windows it only scans the root `c:\` drive if you don't give any extra arguments.
 We recommend specifying the drives you need to scan on the commandline such as (drives that don't exist are skipped):
 
