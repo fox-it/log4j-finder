@@ -5,6 +5,24 @@ It scans recursively both on disk and inside (nested) Java Archive files (JARs).
 
 ![log4j-finder results](screenshot.png?raw=true "Output of log4j-finder")
 
+## How it works
+
+log4j-finder identifies `log4j2` libraries on your filesystem using a list of *known bad* and *known good* MD5 hashes of specific files (currently only `JndiManager.class`) present in `log4j2-core-*` packages; the main package that is affected by `log4shell`. It searches for these files inside Java Archive files and on the filesystem. The `log4j2` version is then identified based on the MD5 hash of this file.
+
+To optimize scanning speed, it searches the filesystem and processes ONLY the following filenames:
+
+ * All files with `Java ARchive` file extensions in the filename (also nested in these archives):
+    *  `*.jar`, `*.war`, `*.ear`
+ * Filenames that we have *known bad* and *good* hashes for (also inside above archives, and nested):
+    *  `JndiManager.class`
+
+If the file matches one of the extensions mentioned above, it will check inside these archives (all in memory, nothing is unpacked) to search for the filenames that the script has *known* hashes for. It also looks inside nested archives, for example, a `JAR` file in a `WAR` file.
+
+The script does NOT scan other archive file extensions such as `7z`, `RAR`, `TAR`, `BZ2`, etc. So, for example, if a `JAR` file is inside a `7z` file, the script will not find it. The rationale is that Java can only load `Java ARchive` formats so we only scan those.
+
+Unknown MD5 hashes are shown as `UNKNOWN`; this could happen if a non `log4j2` Java package uses the same filename that this script searches for.
+It's most likely not `log4j2` if the identified file path does not contain references to `org/apache/logging/log4j`. However, manual verification is still recommended.
+
 ## Downloading and running
 
 You can install log4j-finder using one of the following methods:
@@ -63,6 +81,9 @@ We are aware that some Anti Virus vendors don't like the Windows binaries, in th
 
 1. If you don't have Python 3.6 or higher installed, download it first from https://www.python.org/downloads/
 
+   * Choose `Python 3.8.10` if you want your binary to work on Windows 7:
+     * Download [Python 3.8.10 Windows installer (32 bit)](https://www.python.org/ftp/python/3.8.10/python-3.8.10.exe)
+     * Download [Python 3.8.10 Windows installer (64-bit)](https://www.python.org/ftp/python/3.8.10/python-3.8.10-amd64.exe)
    * Ensure that during install you choose: `Add Python 3.x to PATH`, this makes the following steps much easier.
 
 2. Open a command prompt and use `pip` to install the `pyinstaller` package:

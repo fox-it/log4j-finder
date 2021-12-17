@@ -322,7 +322,10 @@ def main():
                                 lookup_path = str(
                                     zpath.parent.parent / "lookup/JndiLookup.class"
                                 )
-                                has_lookup = zipfile.Path(zfile, lookup_path).exists()
+                                try:
+                                    has_lookup = zfile.open(lookup_path)
+                                except KeyError:
+                                    has_lookup = False
                             check_vulnerable(zf, parents + [zpath], stats, has_lookup)
                 except IOError as e:
                     log.debug(f"{p}: {e}")
