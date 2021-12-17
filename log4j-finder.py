@@ -339,11 +339,9 @@ def main():
                             # If we find JndiManager.class, we also check if JndiLookup.class exists
                             has_lookup = True
                             if zpath.name.lower().endswith("JndiManager.class".lower()):
-                                lookup_path = str(
-                                    zpath.parent.parent / "lookup/JndiLookup.class"
-                                )
+                                lookup_path = zpath.parent.parent / "lookup/JndiLookup.class"
                                 try:
-                                    has_lookup = zfile.open(lookup_path)
+                                    has_lookup = zfile.open(lookup_path.as_posix())
                                 except KeyError:
                                     pass
                             check_vulnerable(zf, parents + [zpath], stats, has_lookup)
