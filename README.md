@@ -18,7 +18,7 @@ To optimize scanning speed, it searches the filesystem and processes ONLY the fo
 
 If the file matches one of the extensions mentioned above, it will check inside these archives (all in memory, nothing is unpacked) to search for the filenames that the script has *known* hashes for. It also looks inside nested archives, for example, a `JAR` file in a `WAR` file.
 
-The script does NOT process other archive file extensions such as `7z`, `RAR`, `TAR`, `BZ2`, etc. So, for example, if a `JAR` file is inside a `7z` file, the script will not find it. The rationale is that Java can only load `Java ARchive` formats so we only process those.
+The script does NOT scan other archive file extensions such as `7z`, `RAR`, `TAR`, `BZ2`, etc. So, for example, if a `JAR` file is inside a `7z` file, the script will not find it. The rationale is that Java can only load `Java ARchive` formats so we only scan those.
 
 Unknown MD5 hashes are shown as `UNKNOWN`; this could happen if a non `log4j2` Java package uses the same filename that this script searches for.
 It's most likely not `log4j2` if the identified file path does not contain references to `org/apache/logging/log4j`. However, manual verification is still recommended.
