@@ -343,7 +343,7 @@ def main():
                                 try:
                                     has_lookup = zfile.open(lookup_path.as_posix())
                                 except KeyError:
-                                    pass
+                                    has_lookup = False
                             check_vulnerable(zf, parents + [zpath], stats, has_lookup)
                 except IOError as e:
                     log.debug(f"{p}: {e}")
