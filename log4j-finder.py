@@ -75,6 +75,7 @@ MD5_BAD = {
     "3bd9f41b89ce4fe8ccbf73e43195a5ce": "log4j 2.6 - 2.6.2",
     "415c13e7c8505fb056d540eac29b72fa": "log4j 2.7 - 2.8.1",
     "5824711d6c68162eb535cc4dbf7485d3": "log4j 2.12.0 - 2.12.1",
+    "102cac5b7726457244af1f44e54ff468": "log4j 2.12.2",
     "6b15f42c333ac39abacfeeeb18852a44": "log4j 2.1 - 2.3",
     "8b2260b1cce64144f6310876f94b1638": "log4j 2.4 - 2.5",
     "a193703904a3f18fb3c90a877eb5c8a7": "log4j 2.8.2",
