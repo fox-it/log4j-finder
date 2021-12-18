@@ -56,7 +56,7 @@ except ImportError:
 log = logging.getLogger(__name__)
 
 # Java Archive Extensions
-JAR_EXTENSIONS = (".jar", ".war", ".ear")
+JAR_EXTENSIONS = (".jar", ".war", ".ear", ".zip")
 
 # Filenames to find and MD5 hash (also recursively in JAR_EXTENSIONS)
 # Currently we just look for JndiManager.class
@@ -174,6 +174,9 @@ def iter_jarfile(fobj, parents=None, stats=None):
     except IOError as e:
         log.debug(f"{fobj}: {e}")
     except zipfile.BadZipFile as e:
+        log.debug(f"{fobj}: {e}")
+    except RuntimeError as e:
+        # RuntimeError: File 'encrypted.zip' is encrypted, password required for extraction
         log.debug(f"{fobj}: {e}")
 
 
