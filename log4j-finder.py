@@ -109,9 +109,12 @@ def iter_scandir(path, stats=None, exclude=None):
     """
     p = Path(path)
     if p.is_file():
-        if stats:
+        if stats is not None:
             stats["files"] += 1
         yield p
+        return
+    if stats is not None:
+        stats["directories"] += 1
     try:
         for entry in scantree(path, stats=stats, exclude=exclude):
             if entry.is_symlink():
@@ -135,11 +138,11 @@ def scantree(path, stats=None, exclude=None):
                 if any(fnmatch.fnmatch(entry.path, exclusion) for exclusion in exclude):
                     continue 
                 if entry.is_dir(follow_symlinks=False):
-                    if stats:
+                    if stats is not None:
                         stats["directories"] += 1
                     yield from scantree(entry.path, stats=stats, exclude=exclude)
                 else:
-                    if stats:
+                    if stats is not None:
                         stats["files"] += 1
                     yield entry
     except IOError as e:
@@ -256,8 +259,8 @@ def print_summary(stats):
 
 def main():
     parser = argparse.ArgumentParser(
-        description=f"%(prog)s v{__version__} - Find vulnerable log4j2 on filesystem (Log4Shell CVE-2021-4428, CVE-2021-45046)",
-        epilog="Files are scanned recursively, both on disk and in Java Archive Files",
+        description=f"%(prog)s v{__version__} - Find vulnerable log4j2 on filesystem (Log4Shell CVE-2021-4428, CVE-2021-45046, CVE-2021-45105)",
+        epilog="Files are scanned recursively, both on disk and in (nested) Java Archive Files",
         formatter_class=argparse.ArgumentDefaultsHelpFormatter,
     )
     parser.add_argument(
