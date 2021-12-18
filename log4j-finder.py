@@ -301,12 +301,13 @@ def main():
     logging.basicConfig(
         format="%(asctime)s %(levelname)s %(message)s",
     )
+    python_version = platform.python_version()
     if args.verbose == 1:
         log.setLevel(logging.INFO)
-        log.info("info logging enabled")
+        log.info(f"info logging enabled - log4j-finder {__version__} - Python {python_version}")
     elif args.verbose >= 2:
         log.setLevel(logging.DEBUG)
-        log.debug("debug logging enabled")
+        log.debug(f"debug logging enabled - log4j-finder {__version__} - Python {python_version}")
 
     if args.no_color:
         global NO_COLOR
