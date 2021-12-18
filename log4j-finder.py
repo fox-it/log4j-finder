@@ -82,12 +82,14 @@ MD5_BAD = {
     "f1d630c48928096a484e4b95ccb162a0": "log4j 2.14.0 - 2.14.1",
     # 2.15.0 vulnerable to Denial of Service attack (source: https://cve.mitre.org/cgi-bin/cvename.cgi?name=CVE-2021-45046)
     "5d253e53fa993e122ff012221aa49ec3": "log4j 2.15.0",
+    # 2.16.0 vulnerable to Infinite recursion in lookup evaluation (source: https://cve.mitre.org/cgi-bin/cvename.cgi?name=CVE-2021-45105)
+    "ba1cf8f81e7b31c709768561ba8ab558": "log4j 2.16.0",
 }
 
 # Known GOOD
 MD5_GOOD = {
-    # JndiManager.class (source: https://repo.maven.apache.org/maven2/org/apache/logging/log4j/log4j-core/2.16.0/log4j-core-2.16.0.jar)
-    "ba1cf8f81e7b31c709768561ba8ab558": "log4j 2.16.0",
+    # JndiManager.class (source: https://repo.maven.apache.org/maven2/org/apache/logging/log4j/log4j-core/2.17.0/log4j-core-2.17.0.jar)
+    "3dc5cf97546007be53b2f3d44028fa58": "log4j 2.17.0",
 }
 
 HOSTNAME = platform.node()
