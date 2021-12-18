@@ -68,6 +68,7 @@ FILENAMES = [
 ]
 
 # Known BAD
+# TODO: add bad StrSubstitutor.class MD5 fingerprints
 MD5_BAD = {
     # JndiManager.class (source: https://github.com/nccgroup/Cyber-Defence/blob/master/Intelligence/CVE-2021-44228/modified-classes/md5sum.txt)
     "04fdd701809d17465c17c7e603b1b202": "log4j 2.9.0 - 2.11.2",
@@ -87,6 +88,7 @@ MD5_BAD = {
 }
 
 # Known GOOD
+# TODO: Add good StrSubstitutor.class MD5 fingerprints
 MD5_GOOD = {
     # JndiManager.class (source: https://repo.maven.apache.org/maven2/org/apache/logging/log4j/log4j-core/2.17.0/log4j-core-2.17.0.jar)
     "3dc5cf97546007be53b2f3d44028fa58": "log4j 2.17.0",
@@ -331,12 +333,17 @@ def main():
                 stats["scanned"] += 1
                 log.info(f"Found file: {p}")
                 with p.open("rb") as fobj:
-                    # If we find JndiManager, we also check if JndiLookup.class exists
+                    #Check if JndiLookup.class exists
                     has_lookup = True
+                    has_
                     if p.name.lower().endswith("JndiManager.class".lower()):
                         lookup_path = p.parent.parent / "lookup/JndiLookup.class"
                         has_lookup = lookup_path.exists()
                     check_vulnerable(fobj, [p], stats, has_lookup)
+                    if p.name.lower().endswith("StrSubstitutor.class".lower()):
+                        lookup_path = p.parent.parent / "lookup/StrSubstitutor.class"
+                        has_lookup = lookup_path.exists()
+                    check_vulnerable(fobj, [p], stats, has_lookup)                    
             if p.suffix.lower() in JAR_EXTENSIONS:
                 try:
                     log.info(f"Found jar file: {p}")
@@ -354,6 +361,13 @@ def main():
                                     has_lookup = zfile.open(lookup_path.as_posix())
                                 except KeyError:
                                     has_lookup = False
+                            check_vulnerable(zf, parents + [zpath], stats, has_lookup)
+                            if zpath.name.lower().endswith("StrSubstitutor.class".lower()):
+                                lookup_path = zpath.parent.parent / "lookup/StrSubstitutor.class"
+                                try:
+                                    has_lookup = zfile.open(lookup_path.as_posix())
+                                except KeyError:
+                                    has_lookup = False                                 
                             check_vulnerable(zf, parents + [zpath], stats, has_lookup)
                 except IOError as e:
                     log.debug(f"{p}: {e}")
