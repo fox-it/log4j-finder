@@ -35,7 +35,7 @@ import fnmatch
 
 from pathlib import Path
 
-__version__ = "1.0.1"
+__version__ = "1.0.2"
 FIGLET = f"""\
  __               _____  __         ___ __           __
 |  |.-----.-----.|  |  ||__|______.'  _|__|.-----.--|  |.-----.----.
@@ -64,55 +64,60 @@ FILENAMES = [
     p.lower()
     for p in [
         "JndiManager.class",
+        "StrSubstitutor.class",
     ]
 ]
 
 # Known BAD
-# TODO: add bad StrSubstitutor.class MD5 fingerprints
-MD5_BAD = {
-    # StrSubstitutor.class (source: https://logging.apache.org/log4j/2.x/security.html#CVE-2021-45105 ) 
-    # Partial list - please validate all md5 sums 
-    "de8030bb3cd1d6b24110c95562dbf399": "log4j 2.0-alpha1 - 2.0-beta3",
-    "6401fe7657ab25b20127efdc61398ae0": "log4j 2.0-beta4",
-    "52454dab43c2fdf430d1733c84579d73": "log4j 2.0-beta5 - 2.0-rc1r",
-    "71774e0ae8aaafed229d9f1ac71f7445": "log4j 2.0-rc2 - 2.0.2",
-    "4e1bbecb881eb0ed2b022ca35ecb1f9e": "log4j 2.1 - 2.3",
-    "46bcbc04843c5b2230b126e08d308a8c": "log4j 2.4 - 2.5",
-    "7ba0e39551863a364c4f1473b48b2dd0": "log4j 2.6",
-    "a4fab2d08ba60b74c20959857d05d19a": "log4j 2.7",
-    "91e80b91b67511dee843705d111607f0": "log4j 2.8 - 2.10.0",
-    "f2a49a5da81d9f0253629c7ac56f4c28": "log4j 2.11.0 ",
-    "e3fb2a9307a13e596cb63c2a105a5757": "log4j 2.12.0 - 2.12.2 ",
-    "a031e7cf7bc665206676d1b986c7e47a": "log4j 2.13.0 ",
-    "0d6a71c70eff31cc1a4e966666cdf473": "log4j 2.14.0 ",
-    "1ac1fbb3d633a7e20608b3112c78ae34": "log4j 2.14.1 - 2.16.0 ",
-    # JndiManager.class (source: https://github.com/nccgroup/Cyber-Defence/blob/master/Intelligence/CVE-2021-44228/modified-classes/md5sum.txt)
-    "04fdd701809d17465c17c7e603b1b202": "log4j 2.9.0 - 2.11.2",
-    "21f055b62c15453f0d7970a9d994cab7": "log4j 2.13.0 - 2.13.3",
-    "3bd9f41b89ce4fe8ccbf73e43195a5ce": "log4j 2.6 - 2.6.2",
-    "415c13e7c8505fb056d540eac29b72fa": "log4j 2.7 - 2.8.1",
-    "5824711d6c68162eb535cc4dbf7485d3": "log4j 2.12.0 - 2.12.1",
-    "102cac5b7726457244af1f44e54ff468": "log4j 2.12.2",
-    "6b15f42c333ac39abacfeeeb18852a44": "log4j 2.1 - 2.3",
-    "8b2260b1cce64144f6310876f94b1638": "log4j 2.4 - 2.5",
-    "a193703904a3f18fb3c90a877eb5c8a7": "log4j 2.8.2",
-    "f1d630c48928096a484e4b95ccb162a0": "log4j 2.14.0 - 2.14.1",
-    # 2.15.0 vulnerable to Denial of Service attack (source: https://cve.mitre.org/cgi-bin/cvename.cgi?name=CVE-2021-45046)
-    "5d253e53fa993e122ff012221aa49ec3": "log4j 2.15.0",
-    # 2.16.0 vulnerable to Infinite recursion in lookup evaluation (source: https://cve.mitre.org/cgi-bin/cvename.cgi?name=CVE-2021-45105)
-    "ba1cf8f81e7b31c709768561ba8ab558": "log4j 2.16.0",
+MD5_BAD = { "lookup/StrSubstitutor.class" : {
+      # StrSubstitutor.class (source: https://logging.apache.org/log4j/2.x/security.html#CVE-2021-45105 )
+      # Partial list - please validate all md5 sums
+
+      "0d6a71c70eff31cc1a4e966666cdf473": "log4j 2.14.0 ",
+      "1ac1fbb3d633a7e20608b3112c78ae34": "log4j 2.14.1 - 2.16.0 ",
+      "46bcbc04843c5b2230b126e08d308a8c": "log4j 2.4 - 2.5",
+      "4e1bbecb881eb0ed2b022ca35ecb1f9e": "log4j 2.1 - 2.3",
+      "52454dab43c2fdf430d1733c84579d73": "log4j 2.0-beta5 - 2.0-rc1r",
+      "6401fe7657ab25b20127efdc61398ae0": "log4j 2.0-beta4",
+      "71774e0ae8aaafed229d9f1ac71f7445": "log4j 2.0-rc2 - 2.0.2",
+      "7ba0e39551863a364c4f1473b48b2dd0": "log4j 2.6",
+      "91e80b91b67511dee843705d111607f0": "log4j 2.8 - 2.10.0",
+      "a031e7cf7bc665206676d1b986c7e47a": "log4j 2.13.0 ",
+      "a4fab2d08ba60b74c20959857d05d19a": "log4j 2.7",
+      "de8030bb3cd1d6b24110c95562dbf399": "log4j 2.0-alpha1 - 2.0-beta3",
+      "e3fb2a9307a13e596cb63c2a105a5757": "log4j 2.12.0 - 2.12.2 ",
+      "f2a49a5da81d9f0253629c7ac56f4c28": "log4j 2.11.0 ",
+
+    }, "lookup/JndiManager.class" : {
+      # JndiManager.class (source: https://github.com/nccgroup/Cyber-Defence/blob/master/Intelligence/CVE-2021-44228/modified-classes/md5sum.txt)
+      "04fdd701809d17465c17c7e603b1b202": "log4j 2.9.0 - 2.11.2",
+      "102cac5b7726457244af1f44e54ff468": "log4j 2.12.2",
+      "21f055b62c15453f0d7970a9d994cab7": "log4j 2.13.0 - 2.13.3",
+      "3bd9f41b89ce4fe8ccbf73e43195a5ce": "log4j 2.6 - 2.6.2",
+      "415c13e7c8505fb056d540eac29b72fa": "log4j 2.7 - 2.8.1",
+      "5824711d6c68162eb535cc4dbf7485d3": "log4j 2.12.0 - 2.12.1",
+      # 2.15.0 vulnerable to Denial of Service attack (source: https://cve.mitre.org/cgi-bin/cvename.cgi?name=CVE-2021-45046)
+      "5d253e53fa993e122ff012221aa49ec3": "log4j 2.15.0",
+      "6b15f42c333ac39abacfeeeb18852a44": "log4j 2.1 - 2.3",
+      "8b2260b1cce64144f6310876f94b1638": "log4j 2.4 - 2.5",
+      "a193703904a3f18fb3c90a877eb5c8a7": "log4j 2.8.2",
+      # 2.16.0 vulnerable to Infinite recursion in lookup evaluation (source: https://cve.mitre.org/cgi-bin/cvename.cgi?name=CVE-2021-45105)
+      "ba1cf8f81e7b31c709768561ba8ab558": "log4j 2.16.0",
+      "f1d630c48928096a484e4b95ccb162a0": "log4j 2.14.0 - 2.14.1",
+    },
 }
 
 # Known GOOD
-MD5_GOOD = {
-    # JndiManager.class (source: https://repo.maven.apache.org/maven2/org/apache/logging/log4j/log4j-core/2.17.0/log4j-core-2.17.0.jar)
-    "3dc5cf97546007be53b2f3d44028fa58": "log4j 2.17.0",
-    # StrSubstitutor.class (source: https://logging.apache.org/log4j/2.x/security.html#CVE-2021-45105 ) 
-    "a031e7cf7bc665206676d1b986c7e47a": "log4j 2.17.0 ",
+MD5_GOOD = { "lookup/StrSubstitutor.class" : {
+      # StrSubstitutor.class (source: https://logging.apache.org/log4j/2.x/security.html#CVE-2021-45105 )
+      "c1dfe395359f872678e6e7b0daec657a" : "log4j 2.17.0 ",
+    }, "lookup/JndiManager.class" : {
+      # JndiManager.class (source: https://repo.maven.apache.org/maven2/org/apache/logging/log4j/log4j-core/2.17.0/log4j-core-2.17.0.jar)
+      "3dc5cf97546007be53b2f3d44028fa58": "log4j 2.17.0",
+    },
 }
 
 HOSTNAME = platform.node()
-
 
 def md5_digest(fobj):
     """Calculate the MD5 digest of a file object."""
@@ -150,12 +155,12 @@ def iter_scandir(path, stats=None, exclude=None):
 
 def scantree(path, stats=None, exclude=None):
     """Recursively yield DirEntry objects for given directory."""
-    exclude = exclude or [] 
+    exclude = exclude or []
     try:
         with os.scandir(path) as it:
             for entry in it:
                 if any(fnmatch.fnmatch(entry.path, exclusion) for exclusion in exclude):
-                    continue 
+                    continue
                 if entry.is_dir(follow_symlinks=False):
                     if stats is not None:
                         stats["directories"] += 1
@@ -235,7 +240,7 @@ def bold(s):
     return f"\033[1m{s}\033[0m"
 
 
-def check_vulnerable(fobj, path_chain, stats, has_jndilookup=True):
+def check_vulnerable(mpattern, fobj, path_chain, stats, has_jndilookup=True):
     """
     Test if fobj matches any of the known bad or known good MD5 hashes.
     Also prints message if fobj is vulnerable or known good or unknown.
@@ -247,13 +252,30 @@ def check_vulnerable(fobj, path_chain, stats, has_jndilookup=True):
     md5sum = md5_digest(fobj)
     first_path = bold(path_chain.pop(0))
     path_chain = " -> ".join(str(p) for p in [first_path] + path_chain)
-    comment = collections.ChainMap(MD5_BAD, MD5_GOOD).get(md5sum, "Unknown MD5")
-    color_map = {"vulnerable": red, "good": green, "patched": cyan, "unknown": yellow}
-    if md5sum in MD5_BAD:
+    if not mpattern:
+      MD5_BAD_UNIVERSE = {}
+      for key in MD5_BAD:
+         MD5_BAD_UNIVERSE = merge(MD5_BAD_UNIVERSE,MD5_BAD[key])
+      MD5_GOOD_UNIVERSE = {}
+      for key in MD5_GOOD:
+         MD5_GOOD_UNIVERSE = merge(MD5_GOOD_UNIVERSE,MD5_GOOD[key])
+      comment = collections.ChainMap(MD5_BAD_UNIVERSE, MD5_GOOD_UNIVERSE).get(md5sum, "Unknown MD5")
+      color_map = {"vulnerable": red, "good": green, "patched": cyan, "unknown": yellow}
+      if md5sum in MD5_BAD_UNIVERSE:
         status = "vulnerable" if has_jndilookup else "patched"
-    elif md5sum in MD5_GOOD:
+      elif md5sum in MD5_GOOD_UNIVERSE:
         status = "good"
+      else:
+        status = "unknown"
+
     else:
+      comment = collections.ChainMap(MD5_BAD[mpattern], MD5_GOOD[mpattern]).get(md5sum, "Unknown MD5")
+      color_map = {"vulnerable": red, "good": green, "patched": cyan, "unknown": yellow}
+      if md5sum in MD5_BAD[mpattern]:
+        status = "vulnerable" if has_jndilookup else "patched"
+      elif md5sum in MD5_GOOD[mpattern]:
+        status = "good"
+      else:
         status = "unknown"
     stats[status] += 1
     color = color_map.get(status, red)
@@ -352,15 +374,16 @@ def main():
                 with p.open("rb") as fobj:
                     #Check if JndiLookup.class exists
                     has_lookup = True
-                    has_
                     if p.name.lower().endswith("JndiManager.class".lower()):
-                        lookup_path = p.parent.parent / "lookup/JndiLookup.class"
-                        has_lookup = lookup_path.exists()
-                    check_vulnerable(fobj, [p], stats, has_lookup)
-                    if p.name.lower().endswith("StrSubstitutor.class".lower()):
-                        lookup_path = p.parent.parent / "lookup/StrSubstitutor.class"
-                        has_lookup = lookup_path.exists()
-                    check_vulnerable(fobj, [p], stats, has_lookup)                    
+                       lookup_path = p.parent.parent / "lookup/JndiLookup.class"
+                       has_lookup = lookup_path.exists()
+                       check_vulnerable("lookup/JndiManager.class", fobj, [p], stats, has_lookup)
+                    elif p.name.lower().endswith("StrSubstitutor.class".lower()):
+                       lookup_path = p.parent.parent / "lookup/StrSubstitutor.class"
+                       has_lookup = lookup_path.exists()
+                       check_vulnerable("lookup/StrSubstitutor.class", fobj, [p], stats, has_lookup)
+                    else:
+                      check_vulnerable("", fobj, [p], stats, has_lookup)
             if p.suffix.lower() in JAR_EXTENSIONS:
                 try:
                     log.info(f"Found jar file: {p}")
@@ -370,22 +393,25 @@ def main():
                     ):
                         log.info(f"Found zfile: {zinfo} ({parents}")
                         with zfile.open(zinfo.filename) as zf:
-                            # If we find JndiManager.class, we also check if JndiLookup.class exists
-                            has_lookup = True
-                            if zpath.name.lower().endswith("JndiManager.class".lower()):
-                                lookup_path = zpath.parent.parent / "lookup/JndiLookup.class"
-                                try:
-                                    has_lookup = zfile.open(lookup_path.as_posix())
-                                except KeyError:
-                                    has_lookup = False
-                            check_vulnerable(zf, parents + [zpath], stats, has_lookup)
-                            if zpath.name.lower().endswith("StrSubstitutor.class".lower()):
-                                lookup_path = zpath.parent.parent / "lookup/StrSubstitutor.class"
-                                try:
-                                    has_lookup = zfile.open(lookup_path.as_posix())
-                                except KeyError:
-                                    has_lookup = False                                 
-                            check_vulnerable(zf, parents + [zpath], stats, has_lookup)
+                          # If we find JndiManager.class, we also check if JndiLookup.class exists
+                          has_lookup = True
+                          if zpath.name.lower().endswith("JndiManager.class".lower()):
+                            lookup_path = zpath.parent.parent / "lookup/JndiLookup.class"
+                            try:
+                              has_lookup = zfile.open(lookup_path.as_posix())
+                            except KeyError:
+                              has_lookup = False
+                            check_vulnerable("lookup/JndiManager.class", zf, parents + [zpath], stats, has_lookup)
+                          elif zpath.name.lower().endswith("StrSubstitutor.class".lower()):
+                            lookup_path = zpath.parent.parent / "lookup/StrSubstitutor.class"
+                            try:
+                              has_lookup = zfile.open(lookup_path.as_posix())
+                            except KeyError:
+                              has_lookup = False
+                            check_vulnerable("lookup/StrSubstitutor.class", zf, parents + [zpath], stats, has_lookup)
+                          else:
+                            check_vulnerable("", zf, parents + [zpath], stats, has_lookup)
+
                 except IOError as e:
                     log.debug(f"{p}: {e}")
 
