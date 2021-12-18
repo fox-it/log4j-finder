@@ -70,6 +70,22 @@ FILENAMES = [
 # Known BAD
 # TODO: add bad StrSubstitutor.class MD5 fingerprints
 MD5_BAD = {
+    # StrSubstitutor.class (source: https://logging.apache.org/log4j/2.x/security.html#CVE-2021-45105 ) 
+    # Partial list - please validate all md5 sums 
+    "de8030bb3cd1d6b24110c95562dbf399": "log4j 2.0-alpha1 - 2.0-beta3",
+    "6401fe7657ab25b20127efdc61398ae0": "log4j 2.0-beta4",
+    "52454dab43c2fdf430d1733c84579d73": "log4j 2.0-beta5 - 2.0-rc1r",
+    "71774e0ae8aaafed229d9f1ac71f7445": "log4j 2.0-rc2 - 2.0.2",
+    "4e1bbecb881eb0ed2b022ca35ecb1f9e": "log4j 2.1 - 2.3",
+    "46bcbc04843c5b2230b126e08d308a8c": "log4j 2.4 - 2.5",
+    "7ba0e39551863a364c4f1473b48b2dd0": "log4j 2.6",
+    "a4fab2d08ba60b74c20959857d05d19a": "log4j 2.7",
+    "91e80b91b67511dee843705d111607f0": "log4j 2.8 - 2.10.0",
+    "f2a49a5da81d9f0253629c7ac56f4c28": "log4j 2.11.0 ",
+    "e3fb2a9307a13e596cb63c2a105a5757": "log4j 2.12.0 - 2.12.2 ",
+    "a031e7cf7bc665206676d1b986c7e47a": "log4j 2.13.0 ",
+    "0d6a71c70eff31cc1a4e966666cdf473": "log4j 2.14.0 ",
+    "1ac1fbb3d633a7e20608b3112c78ae34": "log4j 2.14.1 - 2.16.0 ",
     # JndiManager.class (source: https://github.com/nccgroup/Cyber-Defence/blob/master/Intelligence/CVE-2021-44228/modified-classes/md5sum.txt)
     "04fdd701809d17465c17c7e603b1b202": "log4j 2.9.0 - 2.11.2",
     "21f055b62c15453f0d7970a9d994cab7": "log4j 2.13.0 - 2.13.3",
@@ -88,10 +104,11 @@ MD5_BAD = {
 }
 
 # Known GOOD
-# TODO: Add good StrSubstitutor.class MD5 fingerprints
 MD5_GOOD = {
     # JndiManager.class (source: https://repo.maven.apache.org/maven2/org/apache/logging/log4j/log4j-core/2.17.0/log4j-core-2.17.0.jar)
     "3dc5cf97546007be53b2f3d44028fa58": "log4j 2.17.0",
+    # StrSubstitutor.class (source: https://logging.apache.org/log4j/2.x/security.html#CVE-2021-45105 ) 
+    "a031e7cf7bc665206676d1b986c7e47a": "log4j 2.17.0 ",
 }
 
 HOSTNAME = platform.node()
