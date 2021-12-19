@@ -57,7 +57,7 @@ except ImportError:
 log = logging.getLogger(__name__)
 
 # Java Archive Extensions
-JAR_EXTENSIONS = (".jar", ".war", ".ear", ".aar", ".rar")
+JAR_EXTENSIONS = (".jar", ".war", ".ear", ".zip")
 
 # Filenames to find and MD5 hash (also recursively in JAR_EXTENSIONS)
 # Currently we just look for JndiManager.class
@@ -95,12 +95,14 @@ MD5_BAD = {
     "f1d630c48928096a484e4b95ccb162a0": "log4j 2.14.0 - 2.14.1",
     # 2.15.0 vulnerable to Denial of Service attack (source: https://cve.mitre.org/cgi-bin/cvename.cgi?name=CVE-2021-45046)
     "5d253e53fa993e122ff012221aa49ec3": "log4j 2.15.0",
+    # 2.16.0 vulnerable to Infinite recursion in lookup evaluation (source: https://cve.mitre.org/cgi-bin/cvename.cgi?name=CVE-2021-45105)
+    "ba1cf8f81e7b31c709768561ba8ab558": "log4j 2.16.0",
 }
 
 # Known GOOD
 MD5_GOOD = {
-    # JndiManager.class (source: https://repo.maven.apache.org/maven2/org/apache/logging/log4j/log4j-core/2.16.0/log4j-core-2.16.0.jar)
-    "ba1cf8f81e7b31c709768561ba8ab558": "log4j 2.16.0",
+    # JndiManager.class (source: https://repo.maven.apache.org/maven2/org/apache/logging/log4j/log4j-core/2.17.0/log4j-core-2.17.0.jar)
+    "3dc5cf97546007be53b2f3d44028fa58": "log4j 2.17.0",
 }
 
 HOSTNAME = platform.node()
@@ -135,9 +137,12 @@ def iter_scandir(path, stats=None, exclude=None):
     """
     p = Path(path)
     if p.is_file():
-        if stats:
+        if stats is not None:
             stats["files"] += 1
         yield p
+        return
+    if stats is not None:
+        stats["directories"] += 1
     try:
         for entry in scantree(path, stats=stats, exclude=exclude):
             if entry.is_symlink():
@@ -161,11 +166,11 @@ def scantree(path, stats=None, exclude=None):
                 if any(fnmatch.fnmatch(entry.path, exclusion) for exclusion in exclude):
                     continue 
                 if entry.is_dir(follow_symlinks=False):
-                    if stats:
+                    if stats is not None:
                         stats["directories"] += 1
                     yield from scantree(entry.path, stats=stats, exclude=exclude)
                 else:
-                    if stats:
+                    if stats is not None:
                         stats["files"] += 1
                     yield entry
     except IOError as e:
@@ -208,6 +213,9 @@ def iter_jarfile(fobj, parents=None, stats=None):
     except IOError as e:
         log.debug(f"{fobj}: {e}")
     except zipfile.BadZipFile as e:
+        log.debug(f"{fobj}: {e}")
+    except RuntimeError as e:
+        # RuntimeError: File 'encrypted.zip' is encrypted, password required for extraction
         log.debug(f"{fobj}: {e}")
 
 #region colors
@@ -327,8 +335,8 @@ def print_summary(stats):
 
 def main():
     parser = argparse.ArgumentParser(
-        description=f"%(prog)s v{__version__} - Find vulnerable log4j2 on filesystem (Log4Shell CVE-2021-4428, CVE-2021-45046)",
-        epilog="Files are scanned recursively, both on disk and in Java Archive Files",
+        description=f"%(prog)s v{__version__} - Find vulnerable log4j2 on filesystem (Log4Shell CVE-2021-4428, CVE-2021-45046, CVE-2021-45105)",
+        epilog="Files are scanned recursively, both on disk and in (nested) Java Archive Files",
         formatter_class=argparse.ArgumentDefaultsHelpFormatter,
     )
     parser.add_argument(
@@ -369,12 +377,13 @@ def main():
     logging.basicConfig(
         format="%(asctime)s %(levelname)s %(message)s",
     )
+    python_version = platform.python_version()
     if args.verbose == 1:
         log.setLevel(logging.INFO)
-        log.info("info logging enabled")
+        log.info(f"info logging enabled - log4j-finder {__version__} - Python {python_version}")
     elif args.verbose >= 2:
         log.setLevel(logging.DEBUG)
-        log.debug("debug logging enabled")
+        log.debug(f"debug logging enabled - log4j-finder {__version__} - Python {python_version}")
 
     if args.no_color:
         global NO_COLOR
@@ -402,11 +411,12 @@ def main():
                 with p.open("rb") as fobj:
                     # If we find JndiManager, we also check if JndiLookup.class exists
                     if p.name.lower().endswith("JndiManager.class".lower()):
-                        jndim = Classinfo(str(p), md5_digest(fobj))
+                        classinfos = [ Classinfo(str(p), md5_digest(fobj)) ]
                         lookup_path = p.parent.parent / "lookup/JndiLookup.class"
                         if lookup_path.exists():
-                            test = 1
-                        check_vulnerable(JARinfo("unknown", [str(p)], [jndim]), stats)
+                            with lookup_path.open("rb") as fobj2:
+                                classinfos += [ Classinfo(str(lookup_path), md5_digest(fobj2)) ]
+                        check_vulnerable(JARinfo("unknown", [str(lookup_path)], classinfos), stats)
 
             # Handle JAR files.
             if p.suffix.lower() in JAR_EXTENSIONS:
