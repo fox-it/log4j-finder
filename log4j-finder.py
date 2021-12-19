@@ -342,7 +342,7 @@ def main():
                     log.info(f"Found jar file: {p}")
                     stats["scanned"] += 1
                     for (zinfo, zfile, zpath, parents) in iter_jarfile(
-                        p.resolve().open("rb"), parents=[p.resolve()]
+                        p.open("rb"), parents=[p]
                     ):
                         log.info(f"Found zfile: {zinfo} ({parents}")
                         with zfile.open(zinfo.filename) as zf:
