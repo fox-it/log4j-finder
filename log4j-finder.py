@@ -493,6 +493,7 @@ def scantree(path, stats=None, exclude=None):
   except IOError as e:
       log.debug(e)
 
+
 def iter_jarfile(fobj, parents=None, stats=None):
   """
   Yields (zfile, zinfo, zpath, parents) for each file in zipfile that matches `FILENAMES` or `JAR_EXTENSIONS` (recursively)
@@ -528,12 +529,10 @@ def red(s):
     return s
   return f"\033[31m{s}\033[0m"
 
-
 def green(s):
   if NO_COLOR:
     return s
   return f"\033[32m{s}\033[0m"
-
 
 def yellow(s):
   if NO_COLOR:
@@ -549,7 +548,6 @@ def magenta(s):
   if NO_COLOR:
     return s
   return f"\033[35m{s}\033[0m"
-
 
 def bold(s):
   if NO_COLOR:
@@ -679,7 +677,9 @@ def main():
         try:
           log.info(f"Found jar file: {p}")
           stats["scanned"] += 1
-          for (zinfo, zfile, zpath, parents) in iter_jarfile( p.resolve().open("rb"), parents=[p.resolve()] ):
+          for (zinfo, zfile, zpath, parents) in iter_jarfile( 
+            p.open("rb"), parents=[p] 
+          ):
             log.info(f"Found zfile: {zinfo} ({parents}")
             with zfile.open(zinfo.filename) as zf:
               check_vulnerable(zf, parents + [zpath], stats)
