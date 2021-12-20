@@ -18,6 +18,7 @@
 #  Exclude files or directories:
 #      $ python3 log4j-finder.py / --exclude "/*/.dontgohere" --exclude "/home/user/*.war"
 #
+import json
 import os
 import io
 import sys
@@ -243,7 +244,15 @@ def check_vulnerable(fobj, path_chain, stats, has_jndilookup=True):
     status = bold(color(status.upper()))
     md5sum = color(md5sum)
     comment = bold(color(comment))
-    print(f"[{now}] {hostname} {status}: {path_chain} [{md5sum}: {comment}]")
+
+    return {
+        'timestamp': now,
+        'hostname': hostname,
+        'status': status,
+        'path_chain': path_chain,
+        'md5sum': md5sum,
+        'comment': comment
+    }
 
 
 def print_summary(stats):
@@ -300,6 +309,13 @@ def main():
         help="exclude files/directories by pattern (can be used multiple times)",
         metavar='PATTERN'
     )
+    parser.add_argument(
+        "-o",
+        "--output",
+        choices=['text', 'csv', 'json'],
+        default='text',
+        help="choose output format"
+    )
     args = parser.parse_args()
     logging.basicConfig(
         format="%(asctime)s %(levelname)s %(message)s",
@@ -316,6 +332,12 @@ def main():
         global NO_COLOR
         NO_COLOR = True
 
+    if 'text' not in args.output:
+        NO_COLOR = True
+        args.quiet = True
+        args.no_banner = True
+
+    summary = []
     stats = collections.Counter()
     start_time = time.monotonic()
     hostname = magenta(HOSTNAME)
@@ -336,7 +358,7 @@ def main():
                     if p.name.lower().endswith("JndiManager.class".lower()):
                         lookup_path = p.parent.parent / "lookup/JndiLookup.class"
                         has_lookup = lookup_path.exists()
-                    check_vulnerable(fobj, [p], stats, has_lookup)
+                    summary.append(check_vulnerable(fobj, [p], stats, has_lookup))
             if p.suffix.lower() in JAR_EXTENSIONS:
                 try:
                     log.info(f"Found jar file: {p}")
@@ -354,9 +376,24 @@ def main():
                                     has_lookup = zfile.open(lookup_path.as_posix())
                                 except KeyError:
                                     has_lookup = False
-                            check_vulnerable(zf, parents + [zpath], stats, has_lookup)
+                            summary.append(check_vulnerable(zf, parents + [zpath], stats, has_lookup))
                 except IOError as e:
                     log.debug(f"{p}: {e}")
+
+    if 'text' in args.output:
+        for line in summary:
+            print(
+                f"[{line['timestamp']}] {line['hostname']} {line['status']}: {line['path_chain']} [{line['md5sum']}: {line['comment']}]"
+            )
+    elif 'csv' in args.output:
+        for line in summary:
+            print(
+                f"{line['timestamp']};{line['hostname']};{line['status']};{line['path_chain']};{line['md5sum']};{line['comment']}"
+            )
+    elif 'json' in args.output:
+        print(json.dumps(summary, default=str))
+    else:
+        raise NameError('Unknown output parameter')
 
     elapsed = time.monotonic() - start_time
     now = datetime.datetime.utcnow().replace(microsecond=0)
