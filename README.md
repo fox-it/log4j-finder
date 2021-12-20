@@ -1,6 +1,6 @@
 # log4j-finder
 
-A Python3 script to scan the filesystem to find Log4j2 that is vulnerable to _Log4Shell_ (`CVE-2021-44228` & `CVE-2021-45046`). 
+A Python3 script to scan the filesystem to find Log4j2 that is vulnerable to _Log4Shell_ (`CVE-2021-44228` & `CVE-2021-45046` & `CVE-2021-45105`). 
 It scans recursively both on disk and inside (nested) Java Archive files (JARs).
 
 ![log4j-finder results](screenshot.png?raw=true "Output of log4j-finder")
