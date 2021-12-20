@@ -322,6 +322,10 @@ def main():
 
     if not args.no_banner and not args.quiet:
         print(FIGLET)
+    if sys.platform == "win32" and "/" in args.path:
+        now = datetime.datetime.utcnow().replace(microsecond=0)
+        args.path = [f"{d}:/" for d in 'ABCDEFGHIJKLMNOPQRSTUVWXYZ' if os.path.exists(f'{d}:')]
+        print(f"[{now}] {hostname} Scanning drives: {', '.join(args.path)} you can use the exclude option to exclude network drives. Eg: --exclude 'C:/'")
     for directory in args.path:
         now = datetime.datetime.utcnow().replace(microsecond=0)
         if not args.quiet:
