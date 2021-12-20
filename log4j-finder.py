@@ -429,6 +429,7 @@ def main():
 
 
 if __name__ == "__main__":
+    multiprocessing.freeze_support()
     try:
         sys.exit(main())
     except KeyboardInterrupt:
