@@ -19,6 +19,7 @@
 #      $ python3 log4j-finder.py / --exclude "/*/.dontgohere" --exclude "/home/user/*.war"
 #
 import os
+import ctypes
 import io
 import sys
 import time
@@ -324,8 +325,9 @@ def main():
         print(FIGLET)
     if sys.platform == "win32" and "/" in args.path:
         now = datetime.datetime.utcnow().replace(microsecond=0)
-        args.path = [f"{d}:/" for d in 'ABCDEFGHIJKLMNOPQRSTUVWXYZ' if os.path.exists(f'{d}:')]
-        print(f"[{now}] {hostname} Scanning drives: {', '.join(args.path)} you can use the exclude option to exclude network drives. Eg: --exclude 'C:/'")
+        drives = [f"{d}:/" for d in 'ABCDEFGHIJKLMNOPQRSTUVWXYZ' if os.path.exists(f'{d}:')]
+        args.path = [d for d in drives if ctypes.windll.kernel32.GetDriveTypeW(ctypes.c_wchar_p(d)) == 3]
+        print(f"[{now}] {hostname} Found local drives: {', '.join(args.path)}")
     for directory in args.path:
         now = datetime.datetime.utcnow().replace(microsecond=0)
         if not args.quiet:
