@@ -364,6 +364,9 @@ def main():
         print(f"[{now}] {hostname} Finished scan, elapsed time: {elapsed:.2f} seconds")
         print_summary(stats)
         print(f"\nElapsed time: {elapsed:.2f} seconds")
+        # If script is running as an frozen executable on Windows, prevent the console from closing.
+        if sys.platform == "win32" and getattr(sys, 'frozen', False):
+            os.system("pause")
 
 
 if __name__ == "__main__":
