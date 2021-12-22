@@ -162,6 +162,8 @@ log4j-finder.exe c:\ d:\ e:\ f:\
 
 Files or directories that cannot be accessed (Permission denied errors) are not printed.
 
+If you want to see more output, you can give the `-v` flag for verbose, or `-vv` for debug mode (only recommended for debugging purposes).
+
 Application arguments:
 ```bash
 positional arguments:
