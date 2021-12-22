@@ -161,4 +161,25 @@ log4j-finder.exe c:\ d:\ e:\ f:\
 ```
 
 Files or directories that cannot be accessed (Permission denied errors) are not printed.
+
 If you want to see more output, you can give the `-v` flag for verbose, or `-vv` for debug mode (only recommended for debugging purposes).
+
+Application arguments:
+```bash
+positional arguments:
+  PATH                  Directory or file(s) to scan (recursively) (default:
+                        ['/'])
+
+optional arguments:
+  -h, --help            show this help message and exit
+  -v, --verbose         verbose output (-v is info, -vv is debug) (default: 0)
+  -n, --no-color        disable color output (default: False)
+  -q, --quiet           be more quiet, disables banner and summary (default:
+                        False)
+  -b, --no-banner       disable banner (default: False)
+  -V, --version         show program's version number and exit
+  -e PATTERN, --exclude PATTERN
+                        exclude files/directories by pattern (can be used
+                        multiple times) (default: None)
+```
+Files are scanned recursively, both on disk and in (nested) Java Archive Files
