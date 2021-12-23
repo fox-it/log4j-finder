@@ -365,6 +365,8 @@ def main():
         print_summary(stats)
         print(f"\nElapsed time: {elapsed:.2f} seconds")
 
+    # If we find vulnerabilities then exit with error code (True = 1)
+    return stats["vulnerable"] > 0 
 
 if __name__ == "__main__":
     try:
