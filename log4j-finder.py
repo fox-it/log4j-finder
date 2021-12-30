@@ -90,6 +90,7 @@ MD5_BAD = {
 MD5_GOOD = {
     # JndiManager.class (source: https://repo.maven.apache.org/maven2/org/apache/logging/log4j/log4j-core/2.17.0/log4j-core-2.17.0.jar)
     "3dc5cf97546007be53b2f3d44028fa58": "log4j 2.17.0",
+    "3c3a43af0930a658716b870e66db1569": "log4j 2.17.1",
 }
 
 HOSTNAME = platform.node()
