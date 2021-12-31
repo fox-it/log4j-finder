@@ -104,7 +104,7 @@ def md5_digest(fobj):
         d.update(buf)
     return d.hexdigest()
 
-def iter_scandir(path, stats=None, exclude=None):
+def iter_scandir(path, stats=None, exclude=None, multipass=False):
     """
     Yields all files matcthing JAR_EXTENSIONS or FILENAMES recursively in path
     """
@@ -140,8 +140,10 @@ def iter_scandir(path, stats=None, exclude=None):
     while not zipq.empty():
       try:
         zipnode = zipq.get()
-        yield zipnode
-        #print(f"log4j {zipnode}")
+        if not multipass: 
+          yield zipnode
+        else: 
+          print(f"skipped {zipnode}")
       except IOError as e:
         log.debug(e)
 
@@ -306,6 +308,12 @@ def main():
         help="verbose output (-v is info, -vv is debug)",
     )
     parser.add_argument(
+        "-M",
+        "--multipass",
+        action="store_true",
+        help="multipass scan. Don't scan jar files.",
+    )
+    parser.add_argument(
         "-n", "--no-color", action="store_true", help="disable color output"
     )
     parser.add_argument(
@@ -330,6 +338,10 @@ def main():
         format="%(asctime)s %(levelname)s %(message)s",
     )
     python_version = platform.python_version()
+    
+    if args.multipass:
+        log.info(f"multipass enabled - log4j-finder {__version__} - Python {python_version}")
+        
     if args.verbose == 1:
         log.setLevel(logging.INFO)
         log.info(f"info logging enabled - log4j-finder {__version__} - Python {python_version}")
@@ -351,7 +363,7 @@ def main():
         now = datetime.datetime.utcnow().replace(microsecond=0)
         if not args.quiet:
             print(f"[{now}] {hostname} Scanning: {directory}")
-        for p in iter_scandir(directory, stats=stats, exclude=args.exclude):
+        for p in iter_scandir(directory, stats=stats, exclude=args.exclude, multipass=args.multipass):
             if p.name.lower() in FILENAMES:
                 stats["scanned"] += 1
                 log.info(f"Found file: {p}")
