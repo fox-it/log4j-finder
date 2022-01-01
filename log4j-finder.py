@@ -139,21 +139,38 @@ def iter_scandir(path, stats=None, exclude=None, multipass=False, output=''):
     except IOError as e:
         log.debug(e)
 
-    while not zipq.empty():
-      try:
-        zipnode = zipq.get()
-        if not multipass: 
-          yield zipnode
-        else: 
-          if len(output) == 0: 
-            print(f"skipped {zipnode}")
-          else:
-             with open(output, 'a') as fd:
-               fd.write(str(zipnode) + '\n') 
-         
-      except IOError as e:
-        log.debug(e)
 
+    if not multipass: 
+        while not zipq.empty():
+          try:
+            zipnode = zipq.get()
+            yield zipnode
+          except IOError as e:
+            log.debug(e)
+    else:
+      if len(output) == 0:
+        while not zipq.empty():
+          try:
+            zipnode = zipq.get()          
+            print(f"skipped {zipnode}")
+          except IOError as e:
+            log.debug(e)
+      else:
+        list_of_files = []
+        list_of_files = list(zipq.queue)
+        
+        # Sort list of files in directory by size 
+        try:
+          list_of_files = sorted( list_of_files,
+                            key =  lambda x: os.stat(x).st_size)
+          fd=open(output, 'w')
+          for file in list_of_files:
+            fd.write(str(file) + '\n')
+          fd.close()
+        except IOError as e:
+          log.debug(e)
+
+            
 def scantree(path, stats=None, exclude=None):
     """Recursively yield DirEntry objects for given directory."""
     exclude = exclude or [] 
