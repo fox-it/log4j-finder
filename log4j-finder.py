@@ -104,13 +104,15 @@ def md5_digest(fobj):
         d.update(buf)
     return d.hexdigest()
 
-def iter_scandir(path, stats=None, exclude=None, multipass=False):
+def iter_scandir(path, stats=None, exclude=None, multipass=False, output=''):
     """
     Yields all files matcthing JAR_EXTENSIONS or FILENAMES recursively in path
     """
-    p = Path(path)
+    p = Path(path.strip())
     exclude = exclude or []
-
+    if not p.exists:
+        return
+        
     if p.is_file():
       if any(fnmatch.fnmatch(p.path, exclusion) for exclusion in exclude):
         return 
@@ -120,7 +122,7 @@ def iter_scandir(path, stats=None, exclude=None, multipass=False):
         return
       yield p
       return   
-       
+    
     if stats is not None:
         stats["directories"] += 1
     zipq = queue.Queue(maxsize=0)
@@ -143,7 +145,12 @@ def iter_scandir(path, stats=None, exclude=None, multipass=False):
         if not multipass: 
           yield zipnode
         else: 
-          print(f"skipped {zipnode}")
+          if len(output) == 0: 
+            print(f"skipped {zipnode}")
+          else:
+             with open(output, 'a') as fd:
+               fd.write(str(zipnode) + '\n') 
+         
       except IOError as e:
         log.debug(e)
 
@@ -301,6 +308,24 @@ def main():
         help="Directory or file(s) to scan (recursively)",
     )
     parser.add_argument(
+        '--input',
+        '-i',
+        type=str,
+        dest='input',
+        default='',
+        metavar='PATH',
+        help="Input file (default: nil).",
+    )
+    parser.add_argument(
+        '--output',
+        '-o',
+        type=str,
+        dest='output',
+        default='',
+        metavar='PATH',
+        help="Output file (default: nil).",
+    )
+    parser.add_argument(
         "-v",
         "--verbose",
         action="count",
@@ -359,11 +384,24 @@ def main():
 
     if not args.no_banner and not args.quiet:
         print(FIGLET)
-    for directory in args.path:
+
+    zlist=''
+    if not args.input:
+      zlist = args.path
+    else:
+      try:
+        fd = open(args.input, 'r') 
+        zlist = fd.readlines() 
+
+      except Exception as e:
+        sys.stderr.write('Unable to open file: {0}'.format(e))
+        sys.exit(1)
+    
+    for directory in zlist:
         now = datetime.datetime.utcnow().replace(microsecond=0)
         if not args.quiet:
             print(f"[{now}] {hostname} Scanning: {directory}")
-        for p in iter_scandir(directory, stats=stats, exclude=args.exclude, multipass=args.multipass):
+        for p in iter_scandir(directory, stats=stats, exclude=args.exclude, multipass=args.multipass, output=args.output):
             if p.name.lower() in FILENAMES:
                 stats["scanned"] += 1
                 log.info(f"Found file: {p}")
