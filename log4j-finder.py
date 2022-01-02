@@ -94,7 +94,7 @@ MD5_BAD = {
     "ba1cf8f81e7b31c709768561ba8ab558": "log4j 2.16.0",
     
     # JndiManager.class (source: https://logging.apache.org/log4j/2.x/ )
-    "3dc5cf97546007be53b2f3d44028fa58": "log4j 2.17.0",
+    #"3dc5cf97546007be53b2f3d44028fa58": "log4j 2.17.0",
  
     # possibly good 
     # JndiManager.class (source: https://downloads.apache.org/logging/log4j/)
@@ -107,12 +107,9 @@ MD5_BAD = {
 
 # Known GOOD
 MD5_GOOD = {
-    ## JndiManager.class (source: https://repo.maven.apache.org/maven2/org/apache/logging/log4j/log4j-core/2.17.0/log4j-core-2.17.0.jar)
-    #"3dc5cf97546007be53b2f3d44028fa58": "log4j 2.17.0",
-    #"3c3a43af0930a658716b870e66db1569": "log4j 2.17.1",
- 
-    # JndiManger.class (source: # https://repo.maven.apache.org/maven2/org/apache/logging/log4j/log4j-core/2.17.1/log4j-core-2.17.1.jar)
-    "3c3a43af0930a658716b870e66db1569": "log4j 2.17.1 (for Java 8 and later)",
+    # JndiManager.class (source: https://repo.maven.apache.org/maven2/org/apache/logging/log4j/log4j-core/2.17.0/log4j-core-2.17.0.jar)
+    "3dc5cf97546007be53b2f3d44028fa58": "log4j 2.17.0",
+    "3c3a43af0930a658716b870e66db1569": "log4j 2.17.1",
 }
 
 HOSTNAME = platform.node()
