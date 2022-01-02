@@ -76,16 +76,16 @@ MD5_BAD = {
     # JndiManager.class (source: https://github.com/nccgroup/Cyber-Defence/blob/master/Intelligence/CVE-2021-44228/modified-classes/md5sum.txt)
     "6b15f42c333ac39abacfeeeb18852a44": "log4j 2.1 - 2.3", 
     # https://repo.maven.apache.org/maven2/org/apache/logging/log4j/log4j-core/2.3.1/log4j-core-2.3.1.jar
-    "2128ED66F0A5DBC8B5A81EC2376DFEA0": "log4j 2.1 - 2.3.1",
+    "2128ed66f0a5dbc8b5a81ec2376dfea0": "log4j 2.1 - 2.3.1",
     "8b2260b1cce64144f6310876f94b1638": "log4j 2.4 - 2.5",
     "3bd9f41b89ce4fe8ccbf73e43195a5ce": "log4j 2.6 - 2.6.2",
     "415c13e7c8505fb056d540eac29b72fa": "log4j 2.7 - 2.8.1",
     "a193703904a3f18fb3c90a877eb5c8a7": "log4j 2.8.2",
     "04fdd701809d17465c17c7e603b1b202": "log4j 2.9.0 - 2.11.2",
     "5824711d6c68162eb535cc4dbf7485d3": "log4j 2.12.0 - 2.12.1",
-    "102cac5b7726457244af1f44e54ff468": "log4j 2.12.2",",
+    "102cac5b7726457244af1f44e54ff468": "log4j 2.12.2",
     # https://repo.maven.apache.org/maven2/org/apache/logging/log4j/log4j-core/2.12.3/log4j-core-2.12.3.jar
-    "5D058C91E71038ED3BA66F29A071994C": "log4j 2.12.3",", 
+    "5d058c91e71038ed3ba66f29a071994c": "log4j 2.12.3", 
     "21f055b62c15453f0d7970a9d994cab7": "log4j 2.13.0 - 2.13.3",
     "f1d630c48928096a484e4b95ccb162a0": "log4j 2.14.0 - 2.14.1",
     # 2.15.0 vulnerable to Denial of Service attack (source: https://cve.mitre.org/cgi-bin/cvename.cgi?name=CVE-2021-45046)
@@ -99,9 +99,9 @@ MD5_BAD = {
     # possibly good 
     # JndiManager.class (source: https://downloads.apache.org/logging/log4j/)
     # https://repo.maven.apache.org/maven2/org/apache/logging/log4j/log4j-core/2.3.2/log4j-core-2.3.2.jar
-    "A796BC9B7A227EC08E229B09FF0C1FF1" : "Log4j 2.3.2 (for Java 6)",
+    "a796bc9b7a227ec08e229b09ff0c1ff1" : "Log4j 2.3.2 (for Java 6)",
     # https://repo.maven.apache.org/maven2/org/apache/logging/log4j/log4j-core/2.12.4/log4j-core-2.12.4.jar
-    "909F3304825153542280D20A975D3114": "log4j 2.12.4 (for Java 7)",
+    "909f3304825153542280d20a975d3114": "log4j 2.12.4 (for Java 7)",
 
 }
 
