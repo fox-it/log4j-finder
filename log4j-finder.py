@@ -19,6 +19,7 @@
 #      $ python3 log4j-finder.py / --exclude "/*/.dontgohere" --exclude "/home/user/*.war"
 #
 import os
+import ctypes
 import io
 import sys
 import time
@@ -401,20 +402,23 @@ def main():
 
     if not args.no_banner and not args.quiet:
         print(FIGLET)
-
-    zlist=''
-    if not args.input:
-      zlist = args.path
-    else:
+    
+    #credit to Simon Balzer
+    if sys.platform == "win32" and "/" in args.path:
+        drives = [f"{d}:/" for d in 'ABCDEFGHIJKLMNOPQRSTUVWXYZ' if os.path.exists(f'{d}:')]
+        args.path = [d for d in drives if ctypes.windll.kernel32.GetDriveTypeW(ctypes.c_wchar_p(d)) == 3]
+        now = datetime.datetime.utcnow().replace(microsecond=0)
+        print(f"[{now}] {hostname} Found local drives: {', '.join(args.path)}")
+        
+    if args.input:
       try:
         fd = open(args.input, 'r') 
-        zlist = fd.readlines() 
-
+        args.path = fd.readlines() 
       except Exception as e:
         sys.stderr.write('Unable to open file: {0}'.format(e))
         sys.exit(1)
     
-    for directory in zlist:
+    for directory in args.path:
         now = datetime.datetime.utcnow().replace(microsecond=0)
         if not args.quiet:
             print(f"[{now}] {hostname} Scanning: {directory}")
