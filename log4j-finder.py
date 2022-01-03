@@ -19,6 +19,7 @@
 #      $ python3 log4j-finder.py / --exclude "/*/.dontgohere" --exclude "/home/user/*.war"
 #
 import os
+import ctypes
 import io
 import sys
 import time
@@ -32,6 +33,7 @@ import functools
 import itertools
 import collections
 import fnmatch
+import queue
 
 from pathlib import Path
 
@@ -69,28 +71,60 @@ FILENAMES = [
 
 # Known BAD
 MD5_BAD = {
+    # TODO: add the entire list of known bad  JndiManager.class hashes 
+
+    # Critical 
+    # Unpatched: CVE-2021-44228 + CVE-2021-45046 + CVE-2021-45105 + CVE-2021-44832
     # JndiManager.class (source: https://github.com/nccgroup/Cyber-Defence/blob/master/Intelligence/CVE-2021-44228/modified-classes/md5sum.txt)
-    "04fdd701809d17465c17c7e603b1b202": "log4j 2.9.0 - 2.11.2",
-    "21f055b62c15453f0d7970a9d994cab7": "log4j 2.13.0 - 2.13.3",
+    "6b15f42c333ac39abacfeeeb18852a44": "log4j 2.1 - 2.3", 
+    # https://repo.maven.apache.org/maven2/org/apache/logging/log4j/log4j-core/2.3.1/log4j-core-2.3.1.jar
+    "2128ed66f0a5dbc8b5a81ec2376dfea0": "log4j 2.1 - 2.3.1",
+    "8b2260b1cce64144f6310876f94b1638": "log4j 2.4 - 2.5",
     "3bd9f41b89ce4fe8ccbf73e43195a5ce": "log4j 2.6 - 2.6.2",
     "415c13e7c8505fb056d540eac29b72fa": "log4j 2.7 - 2.8.1",
-    "5824711d6c68162eb535cc4dbf7485d3": "log4j 2.12.0 - 2.12.1",
-    "102cac5b7726457244af1f44e54ff468": "log4j 2.12.2",
-    "6b15f42c333ac39abacfeeeb18852a44": "log4j 2.1 - 2.3",
-    "8b2260b1cce64144f6310876f94b1638": "log4j 2.4 - 2.5",
     "a193703904a3f18fb3c90a877eb5c8a7": "log4j 2.8.2",
+    "04fdd701809d17465c17c7e603b1b202": "log4j 2.9.0 - 2.11.2",
+    "5824711d6c68162eb535cc4dbf7485d3": "log4j 2.12.0 - 2.12.1",
+    # https://repo.maven.apache.org/maven2/org/apache/logging/log4j/log4j-core/2.12.3/log4j-core-2.12.3.jar
+    "5d058c91e71038ed3ba66f29a071994c": "log4j 2.12.3", 
+    "21f055b62c15453f0d7970a9d994cab7": "log4j 2.13.0 - 2.13.3",
     "f1d630c48928096a484e4b95ccb162a0": "log4j 2.14.0 - 2.14.1",
+ 
+    # Critical
+    # Fixed:     CVE-2021-44228
+    # Unpatched: CVE-2021-45046 + CVE-2021-45105 + CVE-2021-44832
     # 2.15.0 vulnerable to Denial of Service attack (source: https://cve.mitre.org/cgi-bin/cvename.cgi?name=CVE-2021-45046)
     "5d253e53fa993e122ff012221aa49ec3": "log4j 2.15.0",
+
+    # Moderate
+    # Fixed:     CVE-2021-44228 + CVE-2021-45046
+    # Unpatched: CVE-2021-45105 + CVE-2021-44832
     # 2.16.0 vulnerable to Infinite recursion in lookup evaluation (source: https://cve.mitre.org/cgi-bin/cvename.cgi?name=CVE-2021-45105)
-    "ba1cf8f81e7b31c709768561ba8ab558": "log4j 2.16.0",
+    "ba1cf8f81e7b31c709768561ba8ab558": "log4j 2.16.0 (For Java 8 and above)",
+    "102cac5b7726457244af1f44e54ff468": "log4j 2.12.2 (For JAva 7)",
+ 
+    # Moderate 
+    # fixes CVE-2021-44228 + CVE-2021-45046 + CVE-2021-45105
+    # Unpatched: CVE-2021-44832
+    # JndiManager.class (source: https://repo.maven.apache.org/maven2/org/apache/logging/log4j/log4j-core/2.17.0/log4j-core-2.17.0.jar)
+    # (source: https://isc.sans.edu/forums/diary/Log4j+2+Security+Vulnerabilities+Update+Guide/28188/ ;)
+    "3dc5cf97546007be53b2f3d44028fa58": "log4j 2.17.0 (for Java 8 and above)",
+    "5d058c91e71038ed3ba66f29a071994c": "log4j 2.12.3 (for Java 7)",
+    "2128ed66f0a5dbc8b5a81ec2376dfea0": "log4j 2.3.1  (for Java 6)",
 }
 
 # Known GOOD
 MD5_GOOD = {
-    # JndiManager.class (source: https://repo.maven.apache.org/maven2/org/apache/logging/log4j/log4j-core/2.17.0/log4j-core-2.17.0.jar)
-    "3dc5cf97546007be53b2f3d44028fa58": "log4j 2.17.0",
-    "3c3a43af0930a658716b870e66db1569": "log4j 2.17.1",
+    # fixed:     CVE-2021-44228 + CVE-2021-45046 + CVE-2021-45105 + CVE-2021-44832
+    # JndiManager.class (source: https://downloads.apache.org/logging/log4j/)
+    # (source: https://isc.sans.edu/forums/diary/Log4j+2+Security+Vulnerabilities+Update+Guide/28188/ ;)
+    # https://repo.maven.apache.org/maven2/org/apache/logging/log4j/log4j-core/2.17.1/log4j-core-2.17.1.jar
+    # https://repo.maven.apache.org/maven2/org/apache/logging/log4j/log4j-core/2.12.4/log4j-core-2.12.4.jar
+    # https://repo.maven.apache.org/maven2/org/apache/logging/log4j/log4j-core/2.3.2/log4j-core-2.3.2.jar
+    "3c3a43af0930a658716b870e66db1569": "log4j 2.17.1 (for Java 8 and above)",
+    "909f3304825153542280d20a975d3114": "log4j 2.12.4 (for Java 7)",
+    "a796bc9b7a227ec08e229b09ff0c1ff1" : "Log4j 2.3.2 (for Java 6)",
+
 }
 
 HOSTNAME = platform.node()
@@ -103,19 +137,28 @@ def md5_digest(fobj):
         d.update(buf)
     return d.hexdigest()
 
-
-def iter_scandir(path, stats=None, exclude=None):
+def iter_scandir(path, stats=None, exclude=None, multipass=False, output=''):
     """
     Yields all files matcthing JAR_EXTENSIONS or FILENAMES recursively in path
     """
-    p = Path(path)
-    if p.is_file():
-        if stats is not None:
-            stats["files"] += 1
-        yield p
+    p = Path(path.strip())
+    exclude = exclude or []
+    if not p.exists:
         return
+        
+    if p.is_file():
+      if any(fnmatch.fnmatch(p.path, exclusion) for exclusion in exclude):
+        return 
+      if stats is not None:
+        stats["files"] += 1
+      if p.is_symlink():
+        return
+      yield p
+      return   
+    
     if stats is not None:
         stats["directories"] += 1
+    zipq = queue.Queue(maxsize=0)
     try:
         for entry in scantree(path, stats=stats, exclude=exclude):
             if entry.is_symlink():
@@ -123,38 +166,73 @@ def iter_scandir(path, stats=None, exclude=None):
             elif entry.is_file():
                 name = entry.name.lower()
                 if name.endswith(JAR_EXTENSIONS):
-                    yield Path(entry.path)
+                    zipq.put(Path(entry.path))
                 elif name in FILENAMES:
                     yield Path(entry.path)
     except IOError as e:
         log.debug(e)
 
 
+    if not multipass: 
+        while not zipq.empty():
+          try:
+            zipnode = zipq.get()
+            yield zipnode
+          except IOError as e:
+            log.debug(e)
+    else:
+      if len(output) == 0:
+        while not zipq.empty():
+          try:
+            zipnode = zipq.get()          
+            print(f"skipped {zipnode}")
+          except IOError as e:
+            log.debug(e)
+      else:
+        list_of_files = []
+        list_of_files = list(zipq.queue)
+        
+        # Sort list of files in directory by size 
+        try:
+          list_of_files = sorted( list_of_files,
+                            key =  lambda x: os.stat(x).st_size)
+          fd=open(output, 'w')
+          for file in list_of_files:
+            fd.write(str(file) + '\n')
+          fd.close()
+        except IOError as e:
+          log.debug(e)
+
+            
 def scantree(path, stats=None, exclude=None):
     """Recursively yield DirEntry objects for given directory."""
     exclude = exclude or [] 
-    try:
-        with os.scandir(path) as it:
-            for entry in it:
-                if any(fnmatch.fnmatch(entry.path, exclusion) for exclusion in exclude):
-                    continue 
-                if entry.is_dir(follow_symlinks=False):
-                    if stats is not None:
-                        stats["directories"] += 1
-                    yield from scantree(entry.path, stats=stats, exclude=exclude)
-                else:
-                    if stats is not None:
-                        stats["files"] += 1
-                    yield entry
-    except IOError as e:
-        log.debug(e)
-
-
+    dirq = queue.Queue(maxsize=0)
+    dirq.put(path)
+    while not dirq.empty():
+      try:
+          dirnode= dirq.get()
+          with os.scandir(dirnode) as it:
+              for entry in it:
+                  if any(fnmatch.fnmatch(entry.path, exclusion) for exclusion in exclude):
+                      continue 
+                  if entry.is_dir(follow_symlinks=False):
+                      if stats is not None:
+                          stats["directories"] += 1
+                      dirq.put(entry.path)
+                  else:
+                      if stats is not None:
+                          stats["files"] += 1
+                      yield entry
+      except IOError as e:
+          log.debug(e)
+        
 def iter_jarfile(fobj, parents=None, stats=None):
     """
     Yields (zfile, zinfo, zpath, parents) for each file in zipfile that matches `FILENAMES` or `JAR_EXTENSIONS` (recursively)
     """
     parents = parents or []
+    zipq = queue.Queue(maxsize=0)
     try:
         with zipfile.ZipFile(fobj) as zfile:
             for zinfo in zfile.infolist():
@@ -163,15 +241,20 @@ def iter_jarfile(fobj, parents=None, stats=None):
                 if zpath.name.lower() in FILENAMES:
                     yield (zinfo, zfile, zpath, parents)
                 elif zpath.name.lower().endswith(JAR_EXTENSIONS):
-                    zfobj = zfile.open(zinfo.filename)
-                    try:
-                        # Test if we can open the zfobj without errors, fallback to BytesIO otherwise
-                        # see https://github.com/fox-it/log4j-finder/pull/22
-                        zipfile.ZipFile(zfobj)
-                    except zipfile.BadZipFile as e:
-                        log.debug(f"Got {zinfo}: {e}, falling back to BytesIO")
-                        zfobj = io.BytesIO(zfile.open(zinfo.filename).read())
-                    yield from iter_jarfile(zfobj, parents=parents + [zpath])
+                    zipq.put(zinfo.filename)
+                    
+            while not zipq.empty():
+              zipnode = zipq.get()
+              zfobj = zfile.open(zipnode)
+              try: 
+                # Test if we can open the zfobj without errors, fallback to BytesIO otherwise
+                # see https://github.com/fox-it/log4j-finder/pull/22
+                zipfile.ZipFile(zfobj)
+              except zipfile.BadZipFile as e:
+                log.debug(f"Got {zinfo}: {e}, falling back to BytesIO")
+                zfobj = io.BytesIO(zfile.open(zipnode).read())
+              yield from iter_jarfile(zfobj, parents=parents + [zipnode])
+     
     except IOError as e:
         log.debug(f"{fobj}: {e}")
     except zipfile.BadZipFile as e:
@@ -179,7 +262,7 @@ def iter_jarfile(fobj, parents=None, stats=None):
     except RuntimeError as e:
         # RuntimeError: File 'encrypted.zip' is encrypted, password required for extraction
         log.debug(f"{fobj}: {e}")
-
+         
 
 def red(s):
     if NO_COLOR:
@@ -275,11 +358,35 @@ def main():
         help="Directory or file(s) to scan (recursively)",
     )
     parser.add_argument(
+        '--input',
+        '-i',
+        type=str,
+        dest='input',
+        default='',
+        metavar='PATH',
+        help="Input file (default: nil).",
+    )
+    parser.add_argument(
+        '--output',
+        '-o',
+        type=str,
+        dest='output',
+        default='',
+        metavar='PATH',
+        help="Output file (default: nil).",
+    )
+    parser.add_argument(
         "-v",
         "--verbose",
         action="count",
         default=0,
         help="verbose output (-v is info, -vv is debug)",
+    )
+    parser.add_argument(
+        "-M",
+        "--multipass",
+        action="store_true",
+        help="multipass scan. Don't scan jar files.",
     )
     parser.add_argument(
         "-n", "--no-color", action="store_true", help="disable color output"
@@ -306,6 +413,10 @@ def main():
         format="%(asctime)s %(levelname)s %(message)s",
     )
     python_version = platform.python_version()
+    
+    if args.multipass:
+        log.info(f"multipass enabled - log4j-finder {__version__} - Python {python_version}")
+        
     if args.verbose == 1:
         log.setLevel(logging.INFO)
         log.info(f"info logging enabled - log4j-finder {__version__} - Python {python_version}")
@@ -323,11 +434,27 @@ def main():
 
     if not args.no_banner and not args.quiet:
         print(FIGLET)
+    
+    #credit to Simon Balzer
+    if sys.platform == "win32" and "/" in args.path:
+        drives = [f"{d}:/" for d in 'ABCDEFGHIJKLMNOPQRSTUVWXYZ' if os.path.exists(f'{d}:')]
+        args.path = [d for d in drives if ctypes.windll.kernel32.GetDriveTypeW(ctypes.c_wchar_p(d)) == 3]
+        now = datetime.datetime.utcnow().replace(microsecond=0)
+        print(f"[{now}] {hostname} Found local drives: {', '.join(args.path)}")
+        
+    if args.input:
+      try:
+        fd = open(args.input, 'r') 
+        args.path = fd.readlines() 
+      except Exception as e:
+        sys.stderr.write('Unable to open file: {0}'.format(e))
+        sys.exit(1)
+    
     for directory in args.path:
         now = datetime.datetime.utcnow().replace(microsecond=0)
         if not args.quiet:
             print(f"[{now}] {hostname} Scanning: {directory}")
-        for p in iter_scandir(directory, stats=stats, exclude=args.exclude):
+        for p in iter_scandir(directory, stats=stats, exclude=args.exclude, multipass=args.multipass, output=args.output):
             if p.name.lower() in FILENAMES:
                 stats["scanned"] += 1
                 log.info(f"Found file: {p}")
