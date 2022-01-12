@@ -18,6 +18,7 @@
 #  Exclude files or directories:
 #      $ python3 log4j-finder.py / --exclude "/*/.dontgohere" --exclude "/home/user/*.war"
 #
+import json
 import os
 import io
 import sys
@@ -244,7 +245,15 @@ def check_vulnerable(fobj, path_chain, stats, has_jndilookup=True):
     status = bold(color(status.upper()))
     md5sum = color(md5sum)
     comment = bold(color(comment))
-    print(f"[{now}] {hostname} {status}: {path_chain} [{md5sum}: {comment}]")
+
+    return {
+        'timestamp': now,
+        'hostname': hostname,
+        'status': status,
+        'path_chain': path_chain,
+        'md5sum': md5sum,
+        'comment': comment
+    }
 
 
 def print_summary(stats):
@@ -259,6 +268,23 @@ def print_summary(stats):
         print("  Found {} patched files".format(stats["patched"]))
     if stats["unknown"]:
         print("  Found {} unknown files".format(stats["unknown"]))
+
+
+def process_traces(data, output_type, register):
+    if 'text' in output_type:
+        print(
+            f"[{data['timestamp']}] {data['hostname']} {data['status']}: {data['path_chain']} [{data['md5sum']}: {data['comment']}]"
+        )
+    elif 'csv' in output_type:
+        print(
+            f"{data['timestamp']};{data['hostname']};{data['status']};{data['path_chain']};{data['md5sum']};{data['comment']}"
+        )
+    elif 'json_event' in output_type:
+        print(json.dumps(data, default=str))
+    elif 'json' in output_type:
+        register.append(data)
+    else:
+        raise NameError('Unknown output parameter')
 
 
 def main():
@@ -301,6 +327,13 @@ def main():
         help="exclude files/directories by pattern (can be used multiple times)",
         metavar='PATTERN'
     )
+    parser.add_argument(
+        "-o",
+        "--output",
+        choices=['text', 'csv', 'json_event', 'json'],
+        default='text',
+        help="choose output format"
+    )
     args = parser.parse_args()
     logging.basicConfig(
         format="%(asctime)s %(levelname)s %(message)s",
@@ -317,6 +350,12 @@ def main():
         global NO_COLOR
         NO_COLOR = True
 
+    if 'text' not in args.output:
+        NO_COLOR = True
+        args.quiet = True
+        args.no_banner = True
+
+    register = []
     stats = collections.Counter()
     start_time = time.monotonic()
     hostname = magenta(HOSTNAME)
@@ -337,7 +376,7 @@ def main():
                     if p.name.lower().endswith("JndiManager.class".lower()):
                         lookup_path = p.parent.parent / "lookup/JndiLookup.class"
                         has_lookup = lookup_path.exists()
-                    check_vulnerable(fobj, [p], stats, has_lookup)
+                    process_traces(check_vulnerable(fobj, [p], stats, has_lookup), args.output, register)
             if p.suffix.lower() in JAR_EXTENSIONS:
                 try:
                     log.info(f"Found jar file: {p}")
@@ -355,9 +394,12 @@ def main():
                                     has_lookup = zfile.open(lookup_path.as_posix())
                                 except KeyError:
                                     has_lookup = False
-                            check_vulnerable(zf, parents + [zpath], stats, has_lookup)
+                            process_traces(check_vulnerable(zf, parents + [zpath], stats, has_lookup), args.output, register)
                 except IOError as e:
                     log.debug(f"{p}: {e}")
+
+    if register:
+        print(json.dumps(register, default=str))
 
     elapsed = time.monotonic() - start_time
     now = datetime.datetime.utcnow().replace(microsecond=0)
