@@ -269,6 +269,23 @@ def print_summary(stats):
         print("  Found {} unknown files".format(stats["unknown"]))
 
 
+def process_traces(data, output_type, register):
+    if 'text' in output_type:
+        print(
+            f"[{data['timestamp']}] {data['hostname']} {data['status']}: {data['path_chain']} [{data['md5sum']}: {data['comment']}]"
+        )
+    elif 'csv' in output_type:
+        print(
+            f"{data['timestamp']};{data['hostname']};{data['status']};{data['path_chain']};{data['md5sum']};{data['comment']}"
+        )
+    elif 'json_event' in output_type:
+        print(json.dumps(data, default=str))
+    elif 'json' in output_type:
+        register.append(data)
+    else:
+        raise NameError('Unknown output parameter')
+
+
 def main():
     parser = argparse.ArgumentParser(
         description=f"%(prog)s v{__version__} - Find vulnerable log4j2 on filesystem (Log4Shell CVE-2021-4428, CVE-2021-45046, CVE-2021-45105)",
@@ -312,7 +329,7 @@ def main():
     parser.add_argument(
         "-o",
         "--output",
-        choices=['text', 'csv', 'json'],
+        choices=['text', 'csv', 'json_event', 'json'],
         default='text',
         help="choose output format"
     )
@@ -337,7 +354,7 @@ def main():
         args.quiet = True
         args.no_banner = True
 
-    summary = []
+    register = []
     stats = collections.Counter()
     start_time = time.monotonic()
     hostname = magenta(HOSTNAME)
@@ -358,7 +375,7 @@ def main():
                     if p.name.lower().endswith("JndiManager.class".lower()):
                         lookup_path = p.parent.parent / "lookup/JndiLookup.class"
                         has_lookup = lookup_path.exists()
-                    summary.append(check_vulnerable(fobj, [p], stats, has_lookup))
+                    process_traces(check_vulnerable(fobj, [p], stats, has_lookup), args.output, register)
             if p.suffix.lower() in JAR_EXTENSIONS:
                 try:
                     log.info(f"Found jar file: {p}")
@@ -376,24 +393,12 @@ def main():
                                     has_lookup = zfile.open(lookup_path.as_posix())
                                 except KeyError:
                                     has_lookup = False
-                            summary.append(check_vulnerable(zf, parents + [zpath], stats, has_lookup))
+                            process_traces(check_vulnerable(zf, parents + [zpath], stats, has_lookup), args.output, register)
                 except IOError as e:
                     log.debug(f"{p}: {e}")
 
-    if 'text' in args.output:
-        for line in summary:
-            print(
-                f"[{line['timestamp']}] {line['hostname']} {line['status']}: {line['path_chain']} [{line['md5sum']}: {line['comment']}]"
-            )
-    elif 'csv' in args.output:
-        for line in summary:
-            print(
-                f"{line['timestamp']};{line['hostname']};{line['status']};{line['path_chain']};{line['md5sum']};{line['comment']}"
-            )
-    elif 'json' in args.output:
-        print(json.dumps(summary, default=str))
-    else:
-        raise NameError('Unknown output parameter')
+    if register:
+        print(json.dumps(register, default=str))
 
     elapsed = time.monotonic() - start_time
     now = datetime.datetime.utcnow().replace(microsecond=0)
