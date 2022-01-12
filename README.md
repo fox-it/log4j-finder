@@ -31,8 +31,8 @@ You can install log4j-finder using one of the following methods:
 
 You can download the correct binary for your Operating System:
 
- * Windows latest: [log4j-finder.exe](https://github.com/fox-it/log4j-finder/releases/latest/download/log4j-finder.exe)
-   * This can trigger your AntiVirus due to it being a [PyInstaller](https://pyinstaller.readthedocs.io/en/stable/) executable. You can also generate the executable yourself, see "Generating log4j-finder executables" on how to do this.
+ * Windows latest (signed): [log4j-finder-signed.exe](https://github.com/fox-it/log4j-finder/releases/latest/download/log4j-finder-signed.exe)
+   * Non signed binaries are also available but can trigger your AntiVirus due to it being a [PyInstaller](https://pyinstaller.readthedocs.io/en/stable/) executable. You can also generate the executable yourself, see "Generating log4j-finder executables" on how to do this.
  * Linux x86_64 latest: [log4j-finder](https://github.com/fox-it/log4j-finder/releases/latest/download/log4j-finder)
 
 If you are on Linux you can also download the latest release and run using one of the following ways:
@@ -75,7 +75,7 @@ sudo python3 log4j-finder.py
 
 There is a [GitHub Action](https://github.com/fox-it/log4j-finder/blob/main/.github/workflows/pyinstaller.yaml) in the repository that automatically generates a Windows and Linux binary of the `log4j-finder.py` script using  [PyInstaller](https://pyinstaller.readthedocs.io/en/stable/) on every commit. The build artifacts of these workflow runs are used to attach to the [Releases](https://github.com/fox-it/log4j-finder/releases/) page.
 
-We are aware that some Anti Virus vendors don't like the Windows binaries, in that case we recommend using generating the executable yourself using the following steps.
+We are aware that some Anti Virus vendors don't like the Windows binaries, in that case we recommend using generating the executable yourself using the following steps (note that we now also provide signed binaries).
 
 ### Generating the Windows executable
 
@@ -161,4 +161,25 @@ log4j-finder.exe c:\ d:\ e:\ f:\
 ```
 
 Files or directories that cannot be accessed (Permission denied errors) are not printed.
+
 If you want to see more output, you can give the `-v` flag for verbose, or `-vv` for debug mode (only recommended for debugging purposes).
+
+Application arguments:
+```bash
+positional arguments:
+  PATH                  Directory or file(s) to scan (recursively) (default:
+                        ['/'])
+
+optional arguments:
+  -h, --help            show this help message and exit
+  -v, --verbose         verbose output (-v is info, -vv is debug) (default: 0)
+  -n, --no-color        disable color output (default: False)
+  -q, --quiet           be more quiet, disables banner and summary (default:
+                        False)
+  -b, --no-banner       disable banner (default: False)
+  -V, --version         show program's version number and exit
+  -e PATTERN, --exclude PATTERN
+                        exclude files/directories by pattern (can be used
+                        multiple times) (default: None)
+```
+Files are scanned recursively, both on disk and in (nested) Java Archive Files
