@@ -181,5 +181,8 @@ optional arguments:
   -e PATTERN, --exclude PATTERN
                         exclude files/directories by pattern (can be used
                         multiple times) (default: None)
+  -o FORMAT, --output FORMAT
+                        output format for scan results: text, csv, json_event,
+                        json (default: text)
 ```
 Files are scanned recursively, both on disk and in (nested) Java Archive Files
