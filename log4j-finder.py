@@ -259,8 +259,31 @@ def print_summary(stats):
         print("  Found {} patched files".format(stats["patched"]))
     if stats["unknown"]:
         print("  Found {} unknown files".format(stats["unknown"]))
+       
+
+def view_results(fname):
+    try:
+        f = open(fname, "r")
+    except IOError:
+        print("Error:  File does not exist or cannot be opened.")
+        return
+        
+    print(f.read())
+    f.close
 
 
+class Tee(object):
+    def __init__(self, *files):
+        self.files = files
+    def write(self, obj):
+        for f in self.files:
+            f.write(obj)
+            f.flush()
+    def flush(self) :
+        for f in self.files:
+            f.flush()    
+    
+    
 def main():
     parser = argparse.ArgumentParser(
         description=f"%(prog)s v{__version__} - Find vulnerable log4j2 on filesystem (Log4Shell CVE-2021-4428, CVE-2021-45046, CVE-2021-45105)",
@@ -301,11 +324,40 @@ def main():
         help="exclude files/directories by pattern (can be used multiple times)",
         metavar='PATTERN'
     )
+    parser.add_argument(
+        "-s",
+        "--saveresults",
+        metavar = "RESULTS-FILE",
+        help = "Save the results to a file in addition to stdout.  "\
+               "Results will include any color formating unless disabled.  "\
+               "Use --viewresults to view (stdout) the file with color highlighting."
+    )
+    parser.add_argument(
+        "-r",
+        "--viewresults",
+        metavar = "RESULTS-FILE",
+        help = "View saved results with  "\
+               "color high-lighting (see --saveresults)."\
+               "Scan is NOT performed."
+    )
     args = parser.parse_args()
     logging.basicConfig(
         format="%(asctime)s %(levelname)s %(message)s",
     )
     python_version = platform.python_version()
+    if args.viewresults != None:
+        view_results(args.viewresults)
+        return
+        
+    if args.saveresults != None:
+        try:
+            resultfile = open(args.saveresults, "w")
+        except IOError:
+            print("Unable to create results file specified.")
+            return
+        
+        sys.stdout = Tee(sys.stdout, resultfile)
+    
     if args.verbose == 1:
         log.setLevel(logging.INFO)
         log.info(f"info logging enabled - log4j-finder {__version__} - Python {python_version}")
